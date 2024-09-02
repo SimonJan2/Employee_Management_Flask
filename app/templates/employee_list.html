@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Employee List{% endblock %}
+
+{% block content %}
+    <h1>Employee List</h1>
+    <ul class="employee-list">
+        {% for employee in employees %}
+            <li>
+                <a href="{{ url_for('main.employee_profile', id=employee.id) }}">
+                    {{ employee.full_name }} - {{ employee.role }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

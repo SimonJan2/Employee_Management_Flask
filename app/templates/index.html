@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+    <h1>Welcome to the Employee Management System</h1>
+    <div class="tab-container">
+        <div class="tab" onclick="openTab('employees')">Show List of Employees</div>
+        <div class="tab" onclick="openTab('register')">Register to the System</div>
+        <div class="tab" onclick="openTab('benefits')">Employee Benefits</div>
+    </div>
+
+    <div id="employees" class="tab-content">
+        <h2>Employees</h2>
+        <p>Click <a href="{{ url_for('main.employee_list') }}">here</a> to view the list of employees.</p>
+    </div>
+
+    <div id="register" class="tab-content">
+        <h2>Register to the System</h2>
+        <p>Click <a href="{{ url_for('main.register') }}">here</a> to register a new employee.</p>
+    </div>
+
+    <div id="benefits" class="tab-content">
+        <h2>Employee Benefits</h2>
+        <p>Click <a href="{{ url_for('main.benefits') }}">here</a> to view employee benefits.</p>
+    </div>
+{% endblock %}

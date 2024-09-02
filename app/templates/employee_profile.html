@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ employee.full_name }}{% endblock %}
+
+{% block content %}
+    <h1>{{ employee.full_name }}</h1>
+    <div class="employee-profile">
+        <img src="{{ url_for('static', filename='uploads/' + employee.picture) }}" alt="{{ employee.full_name }}">
+        <p><strong>Age:</strong> {{ employee.age }}</p>
+        <p><strong>Phone:</strong> {{ employee.phone_number }}</p>
+        <p><strong>Email:</strong> {{ employee.email }}</p>
+        <p><strong>Role:</strong> {{ employee.role }}</p>
+    </div>
+    {% if current_user.is_admin %}
+        <form method="POST" action="{{ url_for('main.delete_employee', id=employee.id) }}">
+            <input type="submit" value="Delete Employee" onclick="return confirm('Are you sure you want to delete this employee?');">
+        </form>
+    {% endif %}
+{% endblock %}
