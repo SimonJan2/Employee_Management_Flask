@@ -2,6 +2,9 @@
 
 echo "Starting entrypoint script..."
 
+# Create upload folder if it doesn't exist
+mkdir -p /app/app/static/uploads
+
 # Wait for the database to be ready
 echo "Waiting for database..."
 while ! nc -z db 3306; do

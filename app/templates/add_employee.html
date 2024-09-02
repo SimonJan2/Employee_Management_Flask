@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Add Employee</h1>
+    <form method="POST" action="{{ url_for('main.add_employee') }}" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.full_name.label }}
+            {{ form.full_name() }}
+        </div>
+        <div>
+            {{ form.age.label }}
+            {{ form.age() }}
+        </div>
+        <div>
+            {{ form.phone_number.label }}
+            {{ form.phone_number() }}
+        </div>
+        <div>
+            {{ form.email.label }}
+            {{ form.email() }}
+        </div>
+        <div>
+            {{ form.role.label }}
+            {{ form.role() }}
+        </div>
+        <div>
+            {{ form.picture.label }}
+            {{ form.picture() }}
+        </div>
+        <div>
+            {{ form.submit() }}
+        </div>
+    </form>
+{% endblock %}
