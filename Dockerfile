@@ -7,4 +7,8 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["flask", "run", "--host=0.0.0.0"]
+# Make the entrypoint script executable
+RUN chmod +x entrypoint.sh
+
+# Use the entrypoint script
+CMD ["./entrypoint.sh"]
