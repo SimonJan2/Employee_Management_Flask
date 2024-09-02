@@ -17,4 +17,10 @@ def create_app():
     from app.routes import main
     app.register_blueprint(main)
 
+    from app.models import User
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
     return app

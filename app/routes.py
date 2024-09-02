@@ -3,8 +3,7 @@ from flask_login import login_user, login_required, logout_user, current_user
 from app import db
 from app.models import User, Employee
 from app.forms import LoginForm, RegistrationForm, EmployeeForm
-from werkzeug.utils import secure_filename
-import os
+from werkzeug.security import generate_password_hash, check_password_hash
 
 main = Blueprint('main', __name__)
 
@@ -14,6 +13,8 @@ def index():
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
