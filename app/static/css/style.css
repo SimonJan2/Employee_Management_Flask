@@ -1,74 +1,175 @@
+/* Custom color scheme */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --background-color: #ecf0f1;
+    --text-color: #34495e;
+    --accent-color: #e74c3c;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    margin: 0;
-    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: 'Roboto', sans-serif;
 }
 
-header {
-    background-color: #333;
-    color: #fff;
-    padding: 1rem;
+/* Navbar customization */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-nav ul {
-    list-style-type: none;
-    padding: 0;
+.navbar-light .navbar-brand {
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 1.5rem;
 }
 
-nav ul li {
-    display: inline;
-    margin-right: 10px;
+.navbar-light .navbar-nav .nav-link {
+    color: var(--text-color);
+    transition: color 0.3s ease;
 }
 
-nav ul li a {
-    color: #fff;
-    text-decoration: none;
+.navbar-light .navbar-nav .nav-link:hover {
+    color: var(--primary-color);
 }
 
-main {
-    padding: 2rem;
+/* Custom button styles */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
-.tab-container {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 1rem;
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
 }
 
-.tab {
-    cursor: pointer;
-    padding: 10px;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
+.btn-success {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
 }
 
-.tab-content {
-    display: none;
-    padding: 1rem;
-    border: 1px solid #ccc;
+.btn-success:hover {
+    background-color: #27ae60;
+    border-color: #27ae60;
 }
 
-.employee-list {
-    list-style-type: none;
-    padding: 0;
+/* Card customization */
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
 }
 
-.employee-list li {
-    margin-bottom: 10px;
+.card:hover {
+    transform: translateY(-5px);
 }
 
-.employee-profile img {
-    max-width: 200px;
-    margin-bottom: 1rem;
+/* Form customization */
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
 }
 
-footer {
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    padding: 1rem;
-    position: fixed;
-    bottom: 0;
+/* Table customization */
+.table {
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table thead th {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom: none;
+}
+
+/* Custom alert styles */
+.alert {
+    border-radius: 8px;
+}
+
+.alert-success {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: white;
+}
+
+.alert-danger {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+/* Footer customization */
+.footer {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+    h1 {
+        font-size: 2rem;
+    }
+}
+
+/* Animation for page transitions */
+.fade-enter {
+    opacity: 0;
+}
+.fade-enter-active {
+    opacity: 1;
+    transition: opacity 300ms ease-in;
+}
+.fade-exit {
+    opacity: 1;
+}
+.fade-exit-active {
+    opacity: 0;
+    transition: opacity 300ms ease-in;
+}
+
+/* Custom styles for employee cards */
+.employee-card {
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.employee-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
+.employee-card img {
     width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Stylish headers */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+/* Custom button for adding employees */
+.btn-add-employee {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+}
+
+.btn-add-employee:hover {
+    background-color: #27ae60;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }

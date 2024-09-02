@@ -1,17 +1,23 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Welcome to the Employee Management System</h1>
+<div class="jumbotron text-center">
+    <h1 class="display-4">Welcome to the Employee Management System</h1>
+    <p class="lead">Manage your workforce with ease and efficiency.</p>
     {% if current_user.is_authenticated %}
         <p>Hello, {{ current_user.username }}!</p>
-        <a href="{{ url_for('main.employee_list') }}">View Employee List</a>
-        <a href="{{ url_for('main.add_employee') }}">Add New Employee</a>
+        <div class="mt-4">
+            <a href="{{ url_for('main.employee_list') }}" class="btn btn-primary btn-lg mr-2">View Employees</a>
+            <a href="{{ url_for('main.add_employee') }}" class="btn btn-success btn-lg">Add New Employee</a>
+        </div>
         {% if current_user.is_admin %}
-            <a href="{{ url_for('main.approve_users') }}">Approve Users</a>
+            <a href="{{ url_for('main.approve_users') }}" class="btn btn-info btn-lg mt-2">Approve Users</a>
         {% endif %}
-        <a href="{{ url_for('main.logout') }}">Logout</a>
     {% else %}
-        <a href="{{ url_for('main.login') }}">Login</a>
-        <a href="{{ url_for('main.register') }}">Register</a>
+        <div class="mt-4">
+            <a href="{{ url_for('main.login') }}" class="btn btn-primary btn-lg mr-2">Login</a>
+            <a href="{{ url_for('main.register') }}" class="btn btn-success btn-lg">Register</a>
+        </div>
     {% endif %}
+</div>
 {% endblock %}
