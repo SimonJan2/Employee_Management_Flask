@@ -60,8 +60,11 @@ def employee_profile(id):
 def add_employee():
     form = EmployeeForm()
     if form.validate_on_submit():
-        filename = secure_filename(form.picture.data.filename)
-        form.picture.data.save(os.path.join('app', 'static', 'uploads', filename))
+        filename = None
+        if form.picture.data:
+            filename = secure_filename(form.picture.data.filename)
+            form.picture.data.save(os.path.join('app', 'static', 'uploads', filename))
+        
         employee = Employee(
             full_name=form.full_name.data,
             age=form.age.data,
@@ -104,28 +107,3 @@ def approve_user(id):
     db.session.commit()
     flash('User approved successfully')
     return redirect(url_for('main.index'))
-
-@main.route('/add_employee', methods=['GET', 'POST'])
-@login_required
-def add_employee():
-    form = EmployeeForm()
-    if form.validate_on_submit():
-        filename = None
-        if form.picture.data:
-            filename = secure_filename(form.picture.data.filename)
-            form.picture.data.save(os.path.join('app', 'static', 'uploads', filename))
-        
-        employee = Employee(
-            full_name=form.full_name.data,
-            age=form.age.data,
-            phone_number=form.phone_number.data,
-            email=form.email.data,
-            role=form.role.data,
-            picture=filename,
-            user_id=current_user.id
-        )
-        db.session.add(employee)
-        db.session.commit()
-        flash('Employee added successfully')
-        return redirect(url_for('main.employee_list'))
-    return render_template('add_employee.html', form=form)
