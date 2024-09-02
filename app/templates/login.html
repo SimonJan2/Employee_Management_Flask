@@ -1,19 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Login</h1>
-    <form method="POST" action="{{ url_for('main.login') }}">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.username.label }}
-            {{ form.username() }}
-        </div>
-        <div>
-            {{ form.password.label }}
-            {{ form.password() }}
-        </div>
-        <div>
-            {{ form.submit() }}
-        </div>
-    </form>
+    <h1>Welcome to the Employee Management System</h1>
+    {% if current_user.is_authenticated %}
+        <p>Hello, {{ current_user.username }}!</p>
+        <a href="{{ url_for('main.employee_list') }}">View Employee List</a>
+        <a href="{{ url_for('main.add_employee') }}">Add New Employee</a>
+        {% if current_user.is_admin %}
+            <a href="{{ url_for('main.approve_users') }}">Approve Users</a>
+        {% endif %}
+        <a href="{{ url_for('main.logout') }}">Logout</a>
+    {% else %}
+        <a href="{{ url_for('main.login') }}">Login</a>
+        <a href="{{ url_for('main.register') }}">Register</a>
+    {% endif %}
 {% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Approve Users</h1>
+    {% if users %}
+        <ul>
+        {% for user in users %}
+            <li>
+                {{ user.username }} ({{ user.email }})
+                <a href="{{ url_for('main.approve_user', user_id=user.id) }}">Approve</a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No users waiting for approval.</p>
+    {% endif %}
+{% endblock %}
