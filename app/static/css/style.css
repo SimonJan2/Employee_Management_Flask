@@ -8,45 +8,13 @@
 }
 
 body {
-    margin: 0;
-    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-color);
     color: var(--text-color);
-}
-
-/* Header */
-.large-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #333;
-    overflow: hidden;
-    background-size: cover;
-    background-position: center center;
-    z-index: -1;
-}
-
-#large-header {
-    background-image: url('https://www.marcoguglie.it/Codepen/AnimatedHeaderBg/demo-1/img/demo-1-bg.jpg');
-}
-
-.content-wrapper {
-    position: relative;
-    z-index: 1;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background-color: rgba(255, 255, 255, 0.8);
-}
-
-main {
-    flex: 1;
+    font-family: 'Roboto', sans-serif;
 }
 
 /* Navbar customization */
 .navbar {
-    background-color: rgba(255, 255, 255, 0.9) !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -91,7 +59,6 @@ main {
     border: none;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
-    background-color: rgba(255, 255, 255, 0.9);
 }
 
 .card:hover {
@@ -106,7 +73,7 @@ main {
 
 /* Table customization */
 .table {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: white;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -137,8 +104,8 @@ main {
 
 /* Footer customization */
 .footer {
-    background-color: rgba(255, 255, 255, 0.9) !important;
-    color: var(--text-color);
+    background-color: var(--primary-color);
+    color: white;
 }
 
 /* Responsive typography */
@@ -149,6 +116,22 @@ main {
     h1 {
         font-size: 2rem;
     }
+}
+
+/* Animation for page transitions */
+.fade-enter {
+    opacity: 0;
+}
+.fade-enter-active {
+    opacity: 1;
+    transition: opacity 300ms ease-in;
+}
+.fade-exit {
+    opacity: 1;
+}
+.fade-exit-active {
+    opacity: 0;
+    transition: opacity 300ms ease-in;
 }
 
 /* Custom styles for employee cards */
