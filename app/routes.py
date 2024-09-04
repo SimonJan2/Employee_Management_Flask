@@ -1,7 +1,6 @@
 import os
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app import db
 from app.models import User, Employee
@@ -9,9 +8,11 @@ from app.forms import LoginForm, RegistrationForm, EmployeeForm
 
 main = Blueprint('main', __name__)
 
+
 @main.route('/')
 def index():
     return render_template('index.html')
+
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -30,11 +31,13 @@ def login():
         return redirect(url_for('main.index'))
     return render_template('login.html', title='Sign In', form=form)
 
+
 @main.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('main.index'))
+
 
 @main.route('/register', methods=['GET', 'POST'])
 def register():
@@ -44,17 +47,18 @@ def register():
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
-        
+
         # Make the first user an admin and approve them
         if User.query.count() == 0:
             user.is_admin = True
             user.is_approved = True
-        
+
         db.session.add(user)
         db.session.commit()
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('main.login'))
     return render_template('register.html', title='Register', form=form)
+
 
 @main.route('/employee_list')
 @login_required
@@ -62,11 +66,13 @@ def employee_list():
     employees = Employee.query.all()
     return render_template('employee_list.html', employees=employees)
 
+
 @main.route('/employee/<int:id>')
 @login_required
 def employee_profile(id):
     employee = Employee.query.get_or_404(id)
     return render_template('employee_profile.html', employee=employee)
+
 
 @main.route('/add_employee', methods=['GET', 'POST'])
 @login_required
@@ -77,7 +83,7 @@ def add_employee():
         if form.picture.data:
             filename = secure_filename(form.picture.data.filename)
             form.picture.data.save(os.path.join('app', 'static', 'uploads', filename))
-        
+
         employee = Employee(
             full_name=form.full_name.data,
             age=form.age.data,
@@ -93,6 +99,7 @@ def add_employee():
         return redirect(url_for('main.employee_list'))
     return render_template('add_employee.html', form=form)
 
+
 @main.route('/delete_employee/<int:id>', methods=['POST'])
 @login_required
 def delete_employee(id):
@@ -105,6 +112,7 @@ def delete_employee(id):
     flash('Employee deleted successfully')
     return redirect(url_for('main.employee_list'))
 
+
 @main.route('/admin/approve_users')
 @login_required
 def approve_users():
@@ -113,6 +121,7 @@ def approve_users():
         return redirect(url_for('main.index'))
     users = User.query.filter_by(is_approved=False).all()
     return render_template('approve_users.html', users=users)
+
 
 @main.route('/admin/approve_user/<int:user_id>')
 @login_required
@@ -125,6 +134,7 @@ def approve_user(user_id):
     db.session.commit()
     flash(f'User {user.username} has been approved.')
     return redirect(url_for('main.approve_users'))
+
 
 @main.route('/benefits')
 def benefits():
