@@ -1,4 +1,4 @@
-# Uncomment if want to use locally
+# Uncomment if want to use localy
 # terraform {
 #   backend "s3" {
 #     bucket = "ilan-terraform-bucket"
@@ -24,7 +24,7 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-# Define the first subnet
+# Define the first subnet (existing)
 resource "aws_subnet" "main_1" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.subnet_cidr_1
@@ -36,7 +36,13 @@ resource "aws_subnet" "main_1" {
   }
 }
 
-# Define the second subnet
+# Update the route table association for the first subnet
+resource "aws_route_table_association" "main_1" {
+  subnet_id      = aws_subnet.main_1.id
+  route_table_id = aws_route_table.main.id
+}
+
+# Define the second subnet (new)
 resource "aws_subnet" "main_2" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.subnet_cidr_2
@@ -48,7 +54,13 @@ resource "aws_subnet" "main_2" {
   }
 }
 
-resource "aws_route_table" "public" {
+# Add a route table association for the second subnet
+resource "aws_route_table_association" "main_2" {
+  subnet_id      = aws_subnet.main_2.id
+  route_table_id = aws_route_table.main.id
+}
+
+resource "aws_route_table" "main" {
   vpc_id = aws_vpc.main.id
 
   route {
@@ -57,20 +69,14 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "${var.project_name}-public-rt"
+    Name = "${var.project_name}-route-table"
   }
 }
 
-# Associate the route table with the public subnets
-resource "aws_route_table_association" "public_1" {
-  subnet_id      = aws_subnet.main_1.id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table_association" "public_2" {
-  subnet_id      = aws_subnet.main_2.id
-  route_table_id = aws_route_table.public.id
-}
+# resource "aws_route_table_association" "main" {
+#   subnet_id      = aws_subnet.main.id
+#   route_table_id = aws_route_table.main.id
+# }
 
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-alb-sg"
@@ -111,12 +117,28 @@ resource "aws_security_group" "main" {
   }
 
   ingress {
-    description     = "HTTP from anywhere"
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
+    description = "HTTP from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
+
+  # ingress {
+  #   description = "talk to mysql"
+  #   from_port   = 3306
+  #   to_port     = 3306
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
+
+  # ingress {
+  #   description = "Flask from anywhere"
+  #   from_port   = 5000
+  #   to_port     = 5000
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
 
   egress {
     from_port   = 0
@@ -130,6 +152,28 @@ resource "aws_security_group" "main" {
   }
 }
 
+# resource "aws_instance" "main" {
+#   ami           = var.ami_id
+#   instance_type = var.instance_type
+
+#   vpc_security_group_ids = [aws_security_group.main.id]
+#   subnet_id              = aws_subnet.main.id
+#   # key_name               = var.key_name
+
+#   user_data = templatefile("userdata.sh", {
+#     app_version = var.app_version
+#   })
+
+#   tags = {
+#     Name = "${var.project_name}-instance"
+#   }
+
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
+############################# Load Balancer ###############################
+# Update the ALB to use both subnets
 resource "aws_lb" "main" {
   name               = "${var.project_name}-alb"
   internal           = false
@@ -142,6 +186,7 @@ resource "aws_lb" "main" {
   }
 }
 
+# Create a target group for the ALB
 resource "aws_lb_target_group" "main" {
   name     = "${var.project_name}-tg"
   port     = 80
@@ -155,6 +200,7 @@ resource "aws_lb_target_group" "main" {
   }
 }
 
+# Create a listener for the ALB
 resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -166,6 +212,7 @@ resource "aws_lb_listener" "main" {
   }
 }
 
+# Create a launch template
 resource "aws_launch_template" "main" {
   name_prefix   = "${var.project_name}-lt"
   image_id      = var.ami_id
@@ -185,6 +232,7 @@ resource "aws_launch_template" "main" {
   }
 }
 
+# Update the Auto Scaling Group to use both subnets
 resource "aws_autoscaling_group" "main" {
   name                = "${var.project_name}-asg"
   vpc_zone_identifier = [aws_subnet.main_1.id, aws_subnet.main_2.id]
@@ -207,6 +255,7 @@ resource "aws_autoscaling_group" "main" {
   }
 }
 
+# Create a scaling policy (example: based on CPU utilization)
 resource "aws_autoscaling_policy" "main" {
   name                   = "${var.project_name}-cpu-policy"
   autoscaling_group_name = aws_autoscaling_group.main.name
@@ -218,88 +267,4 @@ resource "aws_autoscaling_policy" "main" {
     }
     target_value = 50.0
   }
-}
-
-# MariaDB Instance
-resource "aws_instance" "mariadb" {
-  ami           = var.ami_id
-  instance_type = var.db_instance_type
-  subnet_id     = aws_subnet.main_1.id
-
-  vpc_security_group_ids = [aws_security_group.db.id]
-
-  tags = {
-    Name = "${var.project_name}-mariadb"
-  }
-
-  user_data = <<-EOF
-              #!/bin/bash
-              sudo yum update -y
-              sudo amazon-linux-extras install -y mariadb10.5
-              sudo systemctl start mariadb
-              sudo systemctl enable mariadb
-              sudo mysql -e "CREATE DATABASE ${var.db_name};"
-              sudo mysql -e "CREATE USER '${var.db_username}'@'%' IDENTIFIED BY '${var.db_password}';"
-              sudo mysql -e "GRANT ALL PRIVILEGES ON ${var.db_name}.* TO '${var.db_username}'@'%';"
-              sudo mysql -e "FLUSH PRIVILEGES;"
-              EOF
-}
-
-resource "aws_security_group" "db" {
-  name        = "${var.project_name}-db-sg"
-  description = "Security group for MariaDB server"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    description = "MySQL from anywhere"
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "SSH from anywhere"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_eip_association" "mariadb_eip_assoc" {
-  instance_id   = aws_instance.mariadb.id
-  allocation_id = var.elastic_ip_id
-}
-
-output "alb_dns_name" {
-  value       = aws_lb.main.dns_name
-  description = "The DNS name of the Application Load Balancer"
-}
-
-output "application_url" {
-  value       = "http://${aws_lb.main.dns_name}"
-  description = "The URL of the deployed application"
-}
-
-output "db_host" {
-  value       = aws_instance.mariadb.private_ip
-  description = "The private IP address of the MariaDB instance"
-}
-
-output "deployment_timestamp" {
-  value       = timestamp()
-  description = "The timestamp of when the deployment was performed"
-}
-
-output "app_version" {
-  value       = var.app_version
-  description = "The version of the application that was deployed"
 }
