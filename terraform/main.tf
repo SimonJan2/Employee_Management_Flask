@@ -219,3 +219,87 @@ resource "aws_autoscaling_policy" "main" {
     target_value = 50.0
   }
 }
+
+# MariaDB Instance
+resource "aws_instance" "mariadb" {
+  ami           = var.ami_id
+  instance_type = var.db_instance_type
+  subnet_id     = aws_subnet.main_1.id
+
+  vpc_security_group_ids = [aws_security_group.db.id]
+
+  tags = {
+    Name = "${var.project_name}-mariadb"
+  }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo yum update -y
+              sudo amazon-linux-extras install -y mariadb10.5
+              sudo systemctl start mariadb
+              sudo systemctl enable mariadb
+              sudo mysql -e "CREATE DATABASE ${var.db_name};"
+              sudo mysql -e "CREATE USER '${var.db_username}'@'%' IDENTIFIED BY '${var.db_password}';"
+              sudo mysql -e "GRANT ALL PRIVILEGES ON ${var.db_name}.* TO '${var.db_username}'@'%';"
+              sudo mysql -e "FLUSH PRIVILEGES;"
+              EOF
+}
+
+resource "aws_security_group" "db" {
+  name        = "${var.project_name}-db-sg"
+  description = "Security group for MariaDB server"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "MySQL from anywhere"
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "SSH from anywhere"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_eip_association" "mariadb_eip_assoc" {
+  instance_id   = aws_instance.mariadb.id
+  allocation_id = var.elastic_ip_id
+}
+
+output "alb_dns_name" {
+  value       = aws_lb.main.dns_name
+  description = "The DNS name of the Application Load Balancer"
+}
+
+output "application_url" {
+  value       = "http://${aws_lb.main.dns_name}"
+  description = "The URL of the deployed application"
+}
+
+output "db_host" {
+  value       = aws_instance.mariadb.private_ip
+  description = "The private IP address of the MariaDB instance"
+}
+
+output "deployment_timestamp" {
+  value       = timestamp()
+  description = "The timestamp of when the deployment was performed"
+}
+
+output "app_version" {
+  value       = var.app_version
+  description = "The version of the application that was deployed"
+}
