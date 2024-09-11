@@ -1,22 +1,29 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "Starting entrypoint script..."
 
-# Create upload folder if it doesn't exist
+# Create upload folder if it doesn't exist (redundant with Dockerfile, but kept for safety)
 mkdir -p /app/app/static/uploads
 
-# Wait for the database to be ready
-echo "Waiting for database..."
-while ! nc -z db 3306; do
-  sleep 1
-done
-echo "Database is ready!"
+# Function to check if MySQL is ready
+# wait_for_mysql() {
+#     echo "Waiting for MySQL to be ready..."
+#     while ! nc -z ${DB_HOST:-db} ${DB_PORT:-3306}; do
+#       sleep 1
+#     done
+#     echo "MySQL is ready!"
+# }
+
+# # Wait for MySQL to be ready
+# wait_for_mysql
 
 # Initialize the database
-echo "Initializing database..."
-python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.create_all()"
-echo "Database initialized!"
+python << END
+from init_db import init_db
+init_db()
+END
 
 # Start the Flask application
 echo "Starting Flask application..."
+
 flask run --host=0.0.0.0

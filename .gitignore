@@ -165,3 +165,9 @@ cython_debug/
 *.tfstate
 *.tfstate.backup
 .terraform/
+
+# Docker files - temporary for test
+docker-compose.yml
+# Dockerfile
+# .dockerignore
+# entrypoint.sh

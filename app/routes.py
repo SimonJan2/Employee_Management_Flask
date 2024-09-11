@@ -6,6 +6,8 @@ from werkzeug.utils import secure_filename
 from app import db
 from app.models import User, Employee
 from app.forms import LoginForm, RegistrationForm, EmployeeForm
+from app.models import Ticket
+from app.forms import TicketForm, TicketResponseForm
 
 main = Blueprint('main', __name__)
 
@@ -129,3 +131,62 @@ def approve_user(user_id):
 @main.route('/benefits')
 def benefits():
     return render_template('benefits.html')
+
+@main.route('/create_ticket', methods=['GET', 'POST'])
+@login_required
+def create_ticket():
+    if not hasattr(current_user, 'employee') or not current_user.employee:
+        flash('You do not have an associated employee record. Please contact an administrator.', 'warning')
+        return redirect(url_for('main.index'))
+
+    form = TicketForm()
+    if form.validate_on_submit():
+        ticket = Ticket(
+            title=form.title.data,
+            description=form.description.data,
+            ticket_type=form.ticket_type.data,
+            employee_id=current_user.employee.id
+        )
+        db.session.add(ticket)
+        db.session.commit()
+        flash('Your ticket has been created!', 'success')
+        return redirect(url_for('main.view_tickets'))
+    return render_template('create_ticket.html', title='Create Ticket', form=form)
+
+@main.route('/view_tickets')
+@login_required
+def view_tickets():
+    if current_user.is_admin:
+        # For admins, fetch all tickets with user and employee information
+        tickets = db.session.query(
+            Ticket,
+            Employee.full_name.label('employee_name'),
+            User.username.label('username')
+        ).join(Employee, Ticket.employee_id == Employee.id)\
+         .join(User, Employee.user_id == User.id)\
+         .all()
+    else:
+        # For regular users, fetch only their tickets
+        if current_user.employee:
+            tickets = Ticket.query.filter_by(employee_id=current_user.employee.id).all()
+        else:
+            flash('You do not have an associated employee record. Please contact an administrator.', 'warning')
+            tickets = []
+    
+    return render_template('view_tickets.html', title='View Tickets', tickets=tickets, is_admin=current_user.is_admin)
+
+@main.route('/ticket/<int:ticket_id>', methods=['GET', 'POST'])
+@login_required
+def ticket_detail(ticket_id):
+    ticket = Ticket.query.get_or_404(ticket_id)
+    form = TicketResponseForm()
+    
+    if current_user.is_admin and form.validate_on_submit():
+        ticket.admin_response = form.admin_response.data
+        ticket.status = form.status.data
+        ticket.is_approved = None if form.is_approved.data == 'None' else (form.is_approved.data == 'True')
+        db.session.commit()
+        flash('Your response has been submitted.', 'success')
+        return redirect(url_for('main.view_tickets'))
+    
+    return render_template('ticket_detail.html', title='Ticket Detail', ticket=ticket, form=form)
