@@ -132,20 +132,20 @@ jobs:
           echo "Instance IPs: $INSTANCE_IPS"
           for IP in $INSTANCE_IPS; do
             echo "Connecting to instance $IP"
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$IP << EOF
+            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$IP << 'EOF'
               set -ex
               NEW_VERSION='${{ env.NEW_VERSION }}'
-              echo "Current directory: \$(pwd)"
-              echo "Docker version: \$(sudo docker --version)"
-              echo "New version: \${NEW_VERSION}"
+              echo "Current directory: $(pwd)"
+              echo "Docker version: $(sudo docker --version)"
+              echo "New version: ${NEW_VERSION}"
               
-              if [ -z "\${NEW_VERSION}" ]; then
+              if [ -z "${NEW_VERSION}" ]; then
                 echo "Error: NEW_VERSION is not set"
                 exit 1
               fi
               
               echo "Pulling new Docker image..."
-              sudo docker pull simonjan2/employee_management_flask_test:\${NEW_VERSION}
+              sudo docker pull simonjan2/employee_management_flask_test:${NEW_VERSION}
               
               echo "Stopping and removing existing containers..."
               sudo docker ps -a
@@ -163,7 +163,7 @@ jobs:
               sleep 10
               
               echo "Running new container..."
-              sudo docker run --name app -d -p 80:5000 simonjan2/employee_management_flask_test:\${NEW_VERSION}
+              sudo docker run --name app -d -p 80:5000 simonjan2/employee_management_flask_test:${NEW_VERSION}
               
               echo "Verifying new container..."
               sudo docker ps -a
@@ -171,9 +171,9 @@ jobs:
               echo "Checking port 80 usage after container start..."
               sudo lsof -i :80 || echo "No process found using lsof after container start"
               sudo netstat -tuln | grep :80 || echo "No process found using netstat after container start"
-            EOF
+              EOF
           done
-          rm MyKeyPair.pem
+          rm private_key.pem
 
       - name: Output Application URL
         if: github.event_name == 'push' || github.event_name == 'repository_dispatch'
