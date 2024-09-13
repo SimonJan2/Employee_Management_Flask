@@ -184,8 +184,9 @@ jobs:
           echo "Instance IPs: $INSTANCE_IPS"
           for IP in $INSTANCE_IPS; do
             echo "Connecting to instance $IP"
-            scp -o StrictHostKeyChecking=no -i private_key.pem deploy_script.sh ec2-user@$IP:~/deploy_script.sh
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$IP "NEW_VERSION='$NEW_VERSION' bash ~/deploy_script.sh"
+            scp -o StrictHostKeyChecking=no -o ConnectTimeout=15 -i private_key.pem deploy_script.sh ec2-user@$IP:~/deploy_script.sh || { echo "Error: Could not connect to instance $IP" && exit 1; }
+            ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -i private_key.pem ec2-user@$IP "NEW_VERSION='$NEW_VERSION' bash ~/deploy_script.sh" || { echo "Error: Could not connect to instance $IP" && exit 1; }
+
           done
           rm private_key.pem deploy_script.sh
 
