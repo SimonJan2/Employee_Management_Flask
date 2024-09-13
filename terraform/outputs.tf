@@ -36,8 +36,8 @@ output "db_host" {
 output "alb_instance_ips_command" {
   description = "AWS CLI command to get public IPs of instances behind the ALB"
   value       = <<EOT
-ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[?contains(AutoScalingGroupName, '${var.project_name}')].AutoScalingGroupName" --output text) && \
-INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $ASG_NAME --query "AutoScalingGroups[].Instances[].InstanceId" --output text) && \
-aws ec2 describe-instances --instance-ids $INSTANCE_IDS --query "Reservations[].Instances[].PublicIpAddress" --output text
+ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --query 'AutoScalingGroups[?contains(AutoScalingGroupName, "${var.project_name}")].AutoScalingGroupName' --output text) && \
+INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name "$ASG_NAME" --query 'AutoScalingGroups[].Instances[].InstanceId' --output text) && \
+aws ec2 describe-instances --instance-ids $INSTANCE_IDS --query 'Reservations[].Instances[].PublicIpAddress' --output text
 EOT
 }

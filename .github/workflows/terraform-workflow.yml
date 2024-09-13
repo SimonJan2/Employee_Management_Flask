@@ -4,12 +4,12 @@ on:
 
   repository_dispatch:
     types: [docker-update]
-  # push:
-  #   paths:
-  #     - 'terraform/**'
-  # pull_request:
-  #   paths:
-  #     - 'terraform/**'
+  push:
+    paths:
+      - 'terraform/**'
+  pull_request:
+    paths:
+      - 'terraform/**'
 
 jobs:
   terraform:
@@ -103,13 +103,53 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.BACKEND_REGION }}
         run: |
-          set -x
-          ALB_INSTANCE_IPS_COMMAND="${{ steps.get_ips.outputs.ALB_INSTANCE_IPS_COMMAND }}"
-          echo "Executing ALB Instance IPs Command:"
+          set -ex
+          
+          echo "Terraform Outputs:"
+          terraform output
+          
+          echo "Retrieving ALB Instance IPs Command:"
+          ALB_INSTANCE_IPS_COMMAND=$(terraform output -raw alb_instance_ips_command)
           echo "$ALB_INSTANCE_IPS_COMMAND"
+          
+          echo "Executing ALB Instance IPs Command:"
           IPS=$(eval "$ALB_INSTANCE_IPS_COMMAND")
-          echo "IPS=$IPS" >> $GITHUB_OUTPUT
+          
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to execute ALB Instance IPs Command"
+            exit 1
+          fi
+          
+          # Trim any whitespace
+          IPS=$(echo "$IPS" | xargs)
+          
+          if [ -z "$IPS" ]; then
+            echo "Error: No instance IPs were retrieved"
+            exit 1
+          fi
+          
           echo "Retrieved IPs: $IPS"
+          echo "IPS=$IPS" >> $GITHUB_OUTPUT
+          
+          echo "Debug Information:"
+          echo "AWS CLI version:"
+          aws --version
+          
+          echo "Current AWS region:"
+          aws configure get region
+          
+          echo "Auto Scaling Groups:"
+          aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'employee-management-prod')].AutoScalingGroupName" --output text
+          
+          echo "Instances in Auto Scaling Group:"
+          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'employee-management-prod')].AutoScalingGroupName" --output text)
+          aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name "$ASG_NAME" --query "AutoScalingGroups[].Instances[].[InstanceId,LifecycleState]" --output table
+          
+          echo "Public IPs of Instances:"
+          for IP in $IPS; do
+            echo "IP: $IP"
+            aws ec2 describe-instances --filters "Name=public-ip-address,Values=$IP" --query "Reservations[].Instances[].[InstanceId,State.Name,LaunchTime]" --output table
+          done
 
       - name: Update Docker containers
         if: github.event_name == 'repository_dispatch'
