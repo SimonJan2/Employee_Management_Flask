@@ -98,13 +98,13 @@ variable "elastic_ip_id" {
 variable "asg_min_size" {
   description = "Minimum size of the Auto Scaling Group"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "asg_max_size" {
   description = "Maximum size of the Auto Scaling Group"
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "asg_desired_capacity" {
