@@ -127,7 +127,7 @@ jobs:
           cat << 'EOT' > deploy_script.sh
           #!/bin/bash
           set -ex
-          NEW_VERSION='${{ env.NEW_VERSION }}'
+          NEW_VERSION="$1"
           echo "Current directory: $(pwd)"
           echo "Docker version: $(sudo docker --version)"
           echo "New version: ${NEW_VERSION}"
@@ -178,10 +178,10 @@ jobs:
           for IP in $INSTANCE_IPS; do
             echo "Connecting to instance $IP"
             scp -o StrictHostKeyChecking=no -i private_key.pem deploy_script.sh ec2-user@$IP:~/deploy_script.sh
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$IP 'bash ~/deploy_script.sh'
+            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$IP "bash ~/deploy_script.sh '${{ env.NEW_VERSION }}'"
           done
-          rm private_key.pem deploy_script.sh   
-          
+          rm private_key.pem deploy_script.sh
+
       # - name: Execute commands on EC2 instances
       #   if: github.ref == 'refs/heads/main' && github.event_name == 'repository_dispatch'
       #   env:
