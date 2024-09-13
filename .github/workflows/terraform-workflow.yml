@@ -29,6 +29,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+            
+      - name: Echo client payload
+        run: |
+          echo "Client payload: ${{ toJson(github.event.client_payload) }}"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -173,7 +177,7 @@ jobs:
         env:
           EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
         run: |
-          echo "NEW_VERSION: ${{ env.NEW_VERSION }}"
+          echo "NEW_VERSION: $NEW_VERSION"
           echo "$EC2_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           chmod +x deploy_script.sh
@@ -181,7 +185,7 @@ jobs:
           for IP in $INSTANCE_IPS; do
             echo "Connecting to instance $IP"
             scp -o StrictHostKeyChecking=no -i private_key.pem deploy_script.sh ec2-user@$IP:~/deploy_script.sh
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$IP "NEW_VERSION='${{ env.NEW_VERSION }}' bash ~/deploy_script.sh"
+            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$IP "NEW_VERSION='$NEW_VERSION' bash ~/deploy_script.sh"
           done
           rm private_key.pem deploy_script.sh
 

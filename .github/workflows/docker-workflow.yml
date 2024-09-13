@@ -66,4 +66,4 @@ jobs:
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           event-type: docker-update
-          client-payload: '{"new_version": "${{ needs.docker.outputs.NEW_VERSION }}"}'
+          client-payload: '{"app_version": "${{ needs.docker.outputs.NEW_VERSION }}"}'
