@@ -51,7 +51,10 @@ jobs:
         if: github.event_name == 'repository_dispatch'
         run: |
           echo "Event name: ${{ github.event_name }}"
-          echo "New version from client payload: ${{ env.NEW_VERSION }}"
+          echo "New version from client payload: ${{ github.event.client_payload.app_version }}"
+          echo "NEW_VERSION env var: ${{ env.NEW_VERSION }}"
+          echo "All environment variables:"
+          env
 
       - name: Terraform Init
         run: terraform init
@@ -127,7 +130,6 @@ jobs:
           cat << 'EOT' > deploy_script.sh
           #!/bin/bash
           set -ex
-          NEW_VERSION="$1"
           echo "Current directory: $(pwd)"
           echo "Docker version: $(sudo docker --version)"
           echo "New version: ${NEW_VERSION}"
@@ -171,6 +173,7 @@ jobs:
         env:
           EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
         run: |
+          echo "NEW_VERSION: ${{ env.NEW_VERSION }}"
           echo "$EC2_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           chmod +x deploy_script.sh
@@ -178,7 +181,7 @@ jobs:
           for IP in $INSTANCE_IPS; do
             echo "Connecting to instance $IP"
             scp -o StrictHostKeyChecking=no -i private_key.pem deploy_script.sh ec2-user@$IP:~/deploy_script.sh
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$IP "bash ~/deploy_script.sh '${{ env.NEW_VERSION }}'"
+            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$IP "NEW_VERSION='${{ env.NEW_VERSION }}' bash ~/deploy_script.sh"
           done
           rm private_key.pem deploy_script.sh
 
