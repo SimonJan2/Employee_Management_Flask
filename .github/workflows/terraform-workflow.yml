@@ -5,6 +5,8 @@ on:
   repository_dispatch:
     types: [docker-update]
   push:
+    branches:
+      - main
     paths:
       - 'terraform/**'
   pull_request:
@@ -72,164 +74,164 @@ jobs:
       # - name: Application update step 2
       #   run: terraform apply -target=aws_launch_template.main -target=aws_autoscaling_group.main -target=aws_autoscaling_policy.main -target=aws_lb_listener.main -target=aws_lb_target_group.main -target=aws_lb.main -auto-approve     
       
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'repository_dispatch')
-        run: terraform apply -auto-approve tfplan
-      
-      - name: Get ALB Instance IPs
-        if: github.event_name == 'repository_dispatch'
-        id: get_ips
-        run: |
-          set -x
-          echo "Terraform Outputs:"
-          terraform output
-          TFOUTPUT=$(terraform output -json | sed -n '/^{/,/^}/p')
-          echo "TFOUTPUT: $TFOUTPUT"
-          ALB_INSTANCE_IPS_COMMAND=$(echo "$TFOUTPUT" | jq -r '.alb_instance_ips_command.value')
-          if [ -z "$ALB_INSTANCE_IPS_COMMAND" ]; then
-            echo "Failed to get ALB Instance IPs command"
-            exit 1
-          fi
-          echo "ALB_INSTANCE_IPS_COMMAND<<EOF" >> $GITHUB_OUTPUT
-          echo "$ALB_INSTANCE_IPS_COMMAND" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "ALB Instance IPs Command: $ALB_INSTANCE_IPS_COMMAND"
-
-      - name: Execute ALB Instance IPs Command
-        if: github.event_name == 'repository_dispatch'
-        id: execute_ips_command
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.BACKEND_REGION }}
-        run: |
-          set -ex
-          
-          echo "Terraform Outputs:"
-          terraform output
-          
-          echo "Retrieving ALB Instance IPs Command:"
-          ALB_INSTANCE_IPS_COMMAND=$(terraform output -raw alb_instance_ips_command)
-          echo "$ALB_INSTANCE_IPS_COMMAND"
-          
-          echo "Executing ALB Instance IPs Command:"
-          IPS=$(eval "$ALB_INSTANCE_IPS_COMMAND")
-          
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to execute ALB Instance IPs Command"
-            exit 1
-          fi
-          
-          # Trim any whitespace
-          IPS=$(echo "$IPS" | xargs)
-          
-          if [ -z "$IPS" ]; then
-            echo "Error: No instance IPs were retrieved"
-            exit 1
-          fi
-          
-          echo "Retrieved IPs: $IPS"
-          echo "IPS=$IPS" >> $GITHUB_OUTPUT
-          
-          echo "Debug Information:"
-          echo "AWS CLI version:"
-          aws --version
-          
-          echo "Current AWS region:"
-          aws configure get region
-          
-          echo "Auto Scaling Groups:"
-          aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'employee-management-prod')].AutoScalingGroupName" --output text
-          
-          echo "Instances in Auto Scaling Group:"
-          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'employee-management-prod')].AutoScalingGroupName" --output text)
-          aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name "$ASG_NAME" --query "AutoScalingGroups[].Instances[].[InstanceId,LifecycleState]" --output table
-          
-          echo "Public IPs of Instances:"
-          for IP in $IPS; do
-            echo "IP: $IP"
-            aws ec2 describe-instances --filters "Name=public-ip-address,Values=$IP" --query "Reservations[].Instances[].[InstanceId,State.Name,LaunchTime]" --output table
-          done
-
-      - name: Update Docker containers
-        if: github.event_name == 'repository_dispatch'
-        env:
-          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-        run: |
-          echo "$PRIVATE_KEY" > MyKeyPair.pem
-          chmod 600 MyKeyPair.pem
-          IPS="${{ steps.execute_ips_command.outputs.IPS }}"
-          for IP in $IPS; do
-            ssh -i MyKeyPair.pem -o StrictHostKeyChecking=no ec2-user@$IP << EOF
-              set -ex
-              NEW_VERSION='${{ env.NEW_VERSION }}'
-              echo "Current directory: \$(pwd)"
-              echo "Docker version: \$(sudo docker --version)"
-              echo "New version: \${NEW_VERSION}"
-              
-              if [ -z "\${NEW_VERSION}" ]; then
-                echo "Error: NEW_VERSION is not set"
-                exit 1
-              fi
-              
-              echo "Pulling new Docker image..."
-              sudo docker pull simonjan2/employee_management_flask_test:\${NEW_VERSION}
-              
-              echo "Stopping and removing existing containers..."
-              sudo docker ps -a
-              sudo docker stop app || true
-              sudo docker rm app || true
-              
-              echo "Checking if port 80 is in use..."
-              sudo lsof -i :80 || echo "No process found using lsof"
-              sudo netstat -tuln | grep :80 || echo "No process found using netstat"
-              
-              echo "Stopping any process using port 80..."
-              sudo fuser -k 80/tcp || echo "No process killed by fuser"
-              
-              echo "Waiting for port to be released..."
-              sleep 10
-              
-              echo "Running new container..."
-              sudo docker run --name app -d -p 80:5000 simonjan2/employee_management_flask_test:\${NEW_VERSION}
-              
-              echo "Verifying new container..."
-              sudo docker ps -a
-              
-              echo "Checking port 80 usage after container start..."
-              sudo lsof -i :80 || echo "No process found using lsof after container start"
-              sudo netstat -tuln | grep :80 || echo "No process found using netstat after container start"
-            EOF
-          done
-          rm MyKeyPair.pem
-
-
-      - name: Output Application URL
-        if: github.event_name == 'push' || github.event_name == 'repository_dispatch'
-        run: |
-          APP_URL=$(terraform output -raw application_url || echo "Failed to get application_url")
-          echo "Application is now accessible at: $APP_URL"
-
-      - name: Output Deployment Info
-        if: github.event_name == 'push' || github.event_name == 'repository_dispatch'
-        run: |
-          TIMESTAMP=$(terraform output -raw deployment_timestamp || echo "Failed to get deployment_timestamp")
-          VERSION=$(terraform output -raw app_version || echo "Failed to get app_version")
-          echo "Deployment Timestamp: $TIMESTAMP"
-          echo "Deployed App Version: $VERSION"    
-          
-      - name: Debug Information
-        if: failure()
-        run: |
-          echo "Terraform Version:"
-          terraform version
-          echo "Terraform State List:"
-          terraform state list || echo "Failed to list state"
-          echo "Terraform Show:"
-          terraform show || echo "Failed to show state"
-          echo "Environment Variables:"
-          env | grep -v -e AWS -e SECRET 
-
-      # - name: Terraform Destroy
+      # - name: Terraform Apply
       #   if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'repository_dispatch')
-      #   run: terraform destroy -auto-approve
+      #   run: terraform apply -auto-approve tfplan
+      
+      # - name: Get ALB Instance IPs
+      #   if: github.event_name == 'repository_dispatch'
+      #   id: get_ips
+      #   run: |
+      #     set -x
+      #     echo "Terraform Outputs:"
+      #     terraform output
+      #     TFOUTPUT=$(terraform output -json | sed -n '/^{/,/^}/p')
+      #     echo "TFOUTPUT: $TFOUTPUT"
+      #     ALB_INSTANCE_IPS_COMMAND=$(echo "$TFOUTPUT" | jq -r '.alb_instance_ips_command.value')
+      #     if [ -z "$ALB_INSTANCE_IPS_COMMAND" ]; then
+      #       echo "Failed to get ALB Instance IPs command"
+      #       exit 1
+      #     fi
+      #     echo "ALB_INSTANCE_IPS_COMMAND<<EOF" >> $GITHUB_OUTPUT
+      #     echo "$ALB_INSTANCE_IPS_COMMAND" >> $GITHUB_OUTPUT
+      #     echo "EOF" >> $GITHUB_OUTPUT
+      #     echo "ALB Instance IPs Command: $ALB_INSTANCE_IPS_COMMAND"
+
+      # - name: Execute ALB Instance IPs Command
+      #   if: github.event_name == 'repository_dispatch'
+      #   id: execute_ips_command
+      #   env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_DEFAULT_REGION: ${{ secrets.BACKEND_REGION }}
+      #   run: |
+      #     set -ex
+          
+      #     echo "Terraform Outputs:"
+      #     terraform output
+          
+      #     echo "Retrieving ALB Instance IPs Command:"
+      #     ALB_INSTANCE_IPS_COMMAND=$(terraform output -raw alb_instance_ips_command)
+      #     echo "$ALB_INSTANCE_IPS_COMMAND"
+          
+      #     echo "Executing ALB Instance IPs Command:"
+      #     IPS=$(eval "$ALB_INSTANCE_IPS_COMMAND")
+          
+      #     if [ $? -ne 0 ]; then
+      #       echo "Error: Failed to execute ALB Instance IPs Command"
+      #       exit 1
+      #     fi
+          
+      #     # Trim any whitespace
+      #     IPS=$(echo "$IPS" | xargs)
+          
+      #     if [ -z "$IPS" ]; then
+      #       echo "Error: No instance IPs were retrieved"
+      #       exit 1
+      #     fi
+          
+      #     echo "Retrieved IPs: $IPS"
+      #     echo "IPS=$IPS" >> $GITHUB_OUTPUT
+          
+      #     echo "Debug Information:"
+      #     echo "AWS CLI version:"
+      #     aws --version
+          
+      #     echo "Current AWS region:"
+      #     aws configure get region
+          
+      #     echo "Auto Scaling Groups:"
+      #     aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'employee-management-prod')].AutoScalingGroupName" --output text
+          
+      #     echo "Instances in Auto Scaling Group:"
+      #     ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'employee-management-prod')].AutoScalingGroupName" --output text)
+      #     aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name "$ASG_NAME" --query "AutoScalingGroups[].Instances[].[InstanceId,LifecycleState]" --output table
+          
+      #     echo "Public IPs of Instances:"
+      #     for IP in $IPS; do
+      #       echo "IP: $IP"
+      #       aws ec2 describe-instances --filters "Name=public-ip-address,Values=$IP" --query "Reservations[].Instances[].[InstanceId,State.Name,LaunchTime]" --output table
+      #     done
+
+      # - name: Update Docker containers
+      #   if: github.event_name == 'repository_dispatch'
+      #   env:
+      #     PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+      #   run: |
+      #     echo "$PRIVATE_KEY" > MyKeyPair.pem
+      #     chmod 600 MyKeyPair.pem
+      #     IPS="${{ steps.execute_ips_command.outputs.IPS }}"
+      #     for IP in $IPS; do
+      #       ssh -i MyKeyPair.pem -o StrictHostKeyChecking=no ec2-user@$IP << EOF
+      #         set -ex
+      #         NEW_VERSION='${{ env.NEW_VERSION }}'
+      #         echo "Current directory: \$(pwd)"
+      #         echo "Docker version: \$(sudo docker --version)"
+      #         echo "New version: \${NEW_VERSION}"
+              
+      #         if [ -z "\${NEW_VERSION}" ]; then
+      #           echo "Error: NEW_VERSION is not set"
+      #           exit 1
+      #         fi
+              
+      #         echo "Pulling new Docker image..."
+      #         sudo docker pull simonjan2/employee_management_flask_test:\${NEW_VERSION}
+              
+      #         echo "Stopping and removing existing containers..."
+      #         sudo docker ps -a
+      #         sudo docker stop app || true
+      #         sudo docker rm app || true
+              
+      #         echo "Checking if port 80 is in use..."
+      #         sudo lsof -i :80 || echo "No process found using lsof"
+      #         sudo netstat -tuln | grep :80 || echo "No process found using netstat"
+              
+      #         echo "Stopping any process using port 80..."
+      #         sudo fuser -k 80/tcp || echo "No process killed by fuser"
+              
+      #         echo "Waiting for port to be released..."
+      #         sleep 10
+              
+      #         echo "Running new container..."
+      #         sudo docker run --name app -d -p 80:5000 simonjan2/employee_management_flask_test:\${NEW_VERSION}
+              
+      #         echo "Verifying new container..."
+      #         sudo docker ps -a
+              
+      #         echo "Checking port 80 usage after container start..."
+      #         sudo lsof -i :80 || echo "No process found using lsof after container start"
+      #         sudo netstat -tuln | grep :80 || echo "No process found using netstat after container start"
+      #       EOF
+      #     done
+      #     rm MyKeyPair.pem
+
+
+      # - name: Output Application URL
+      #   if: github.event_name == 'push' || github.event_name == 'repository_dispatch'
+      #   run: |
+      #     APP_URL=$(terraform output -raw application_url || echo "Failed to get application_url")
+      #     echo "Application is now accessible at: $APP_URL"
+
+      # - name: Output Deployment Info
+      #   if: github.event_name == 'push' || github.event_name == 'repository_dispatch'
+      #   run: |
+      #     TIMESTAMP=$(terraform output -raw deployment_timestamp || echo "Failed to get deployment_timestamp")
+      #     VERSION=$(terraform output -raw app_version || echo "Failed to get app_version")
+      #     echo "Deployment Timestamp: $TIMESTAMP"
+      #     echo "Deployed App Version: $VERSION"    
+          
+      # - name: Debug Information
+      #   if: failure()
+      #   run: |
+      #     echo "Terraform Version:"
+      #     terraform version
+      #     echo "Terraform State List:"
+      #     terraform state list || echo "Failed to list state"
+      #     echo "Terraform Show:"
+      #     terraform show || echo "Failed to show state"
+      #     echo "Environment Variables:"
+      #     env | grep -v -e AWS -e SECRET 
+
+      - name: Terraform Destroy
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'repository_dispatch')
+        run: terraform destroy -auto-approve
