@@ -15,6 +15,8 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    outputs:
+      NEW_VERSION: ${{ steps.version.outputs.NEW_VERSION }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -28,21 +30,31 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Get app version from terraform.tfvars
-        id: get_version
+      - name: Generate new version
+        id: version
         run: |
-          APP_VERSION=$(grep 'app_version' terraform/terraform.tfvars | awk -F '"' '{print $2}')
-          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_OUTPUT
+          NEW_VERSION=$(date +%Y%m%d%H%M%S)
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update app_version in terraform.tfvars
+        run: |
+          sed -i 's/app_version = "[^"]*"/app_version = "${{ steps.version.outputs.NEW_VERSION }}"/' terraform/terraform.tfvars
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: simonjan2/employee_management_flask_test:${{ steps.get_version.outputs.APP_VERSION }}
+          tags: simonjan2/employee_management_flask_test:${{ steps.version.outputs.NEW_VERSION }}
 
-    outputs:
-      image_updated: ${{ steps.docker_build.outcome == 'success' }}
+      - name: Commit and push if changes
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add terraform/terraform.tfvars
+          git commit -m "Update app_version to ${{ steps.version.outputs.NEW_VERSION }}" || exit 0
+          git push
+
 
   trigger_terraform:
     needs: docker
@@ -53,4 +65,4 @@ jobs:
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           event-type: docker-update
-          client-payload: '{"docker_updated": "true"}'
+          client-payload: '{"new_version": "${{ needs.docker.outputs.NEW_VERSION }}"}'

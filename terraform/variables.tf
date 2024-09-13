@@ -112,3 +112,8 @@ variable "asg_desired_capacity" {
   type        = number
   default     = 2
 }
+
+variable "key_name" {
+  description = "Name of the SSH key pair"
+  type        = string
+}
