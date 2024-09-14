@@ -1,12 +1,4 @@
-# Uncomment if want to use localy
-# terraform {
-#   backend "s3" {
-#     bucket = "ilan-terraform-bucket"
-#     key    = "terraform/python-master-project.tfstate"
-#     region = "us-east-1" # replace with your preferred region
-#   }
-# }
-
+# Define the VPC
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -16,6 +8,7 @@ resource "aws_vpc" "main" {
   }
 }
 
+# Define the internet gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
@@ -60,6 +53,7 @@ resource "aws_route_table_association" "main_2" {
   route_table_id = aws_route_table.main.id
 }
 
+# Define the route table
 resource "aws_route_table" "main" {
   vpc_id = aws_vpc.main.id
 
@@ -78,11 +72,13 @@ resource "aws_route_table" "main" {
 #   route_table_id = aws_route_table.main.id
 # }
 
+# Define the security groups
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-alb-sg"
   description = "Security group for ALB"
   vpc_id      = aws_vpc.main.id
 
+  # allow http access from anywhere
   ingress {
     description = "HTTP from anywhere"
     from_port   = 80
@@ -103,6 +99,7 @@ resource "aws_security_group" "alb" {
   }
 }
 
+# Define the security groups
 resource "aws_security_group" "main" {
   name        = "${var.project_name}-sg"
   description = "Allow inbound traffic"

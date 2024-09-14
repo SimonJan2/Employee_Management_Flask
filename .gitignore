@@ -165,6 +165,7 @@ cython_debug/
 *.tfstate
 *.tfstate.backup
 .terraform/
+backend.tf
 
 # Docker files - temporary for test
 docker-compose.yml
