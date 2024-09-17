@@ -5,6 +5,71 @@
 ## Overview
 This project is an Employee Management System built with Flask, featuring Docker containerization and Terraform for infrastructure deployment on AWS. It provides functionality for managing employees, handling tickets, and user authentication.
 
+## Architecture
+
+Below is a high-level architecture diagram of the Employee Management System:
+
+```mermaid
+graph TB
+    subgraph "AWS Cloud"
+        VPC["VPC"]
+        subgraph "Public Subnet 1"
+            ALB["Application Load Balancer"]
+            EC2_1["EC2 Instance 1"]
+        end
+        subgraph "Public Subnet 2"
+            EC2_2["EC2 Instance 2"]
+        end
+        ASG["Auto Scaling Group"]
+        S3["S3 Bucket<br>(Employee Photos)"]
+        RDS["RDS MariaDB"]
+        TFS3["S3 Bucket<br>(Terraform State)"]
+    end
+    subgraph "External Services"
+        GH["GitHub"]
+        DH["Docker Hub"]
+    end
+    subgraph "CI/CD Pipeline"
+        GHA["GitHub Actions"]
+    end
+    
+    User["User"] -->|"HTTPS"| ALB
+    ALB -->|"HTTP"| EC2_1
+    ALB -->|"HTTP"| EC2_2
+    EC2_1 -->|"SQL"| RDS
+    EC2_2 -->|"SQL"| RDS
+    EC2_1 -->|"S3 API"| S3
+    EC2_2 -->|"S3 API"| S3
+    ASG -->|"Manages"| EC2_1
+    ASG -->|"Manages"| EC2_2
+    
+    GH -->|"Trigger"| GHA
+    GHA -->|"Build & Push"| DH
+    GHA -->|"Deploy"| EC2_1
+    GHA -->|"Deploy"| EC2_2
+    GHA -->|"Manage Infrastructure"| VPC
+    GHA -->|"Store State"| TFS3
+    
+    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px;
+    classDef external fill:#1EC9E8,stroke:#232F3E,stroke-width:2px;
+    classDef cicd fill:#4CAF50,stroke:#232F3E,stroke-width:2px;
+    class ALB,EC2_1,EC2_2,ASG,S3,RDS,VPC,TFS3 aws;
+    class GH,DH external;
+    class GHA cicd;
+```
+
+This diagram illustrates the main components of the system and their interactions:
+
+- **AWS Cloud**: Contains the core infrastructure including VPC, EC2 instances, Auto Scaling Group, Application Load Balancer, S3 buckets, and RDS database.
+- **External Services**: GitHub for code hosting and Docker Hub for container image storage.
+- **CI/CD Pipeline**: GitHub Actions for automating the build, test, and deployment processes.
+- **User**: Represents end-users accessing the application through a web browser.
+
+The arrows show the flow of data and interactions between different components, providing a clear overview of how the system operates.
+
+Note: To view this diagram on GitHub, you may need to use a browser extension that renders Mermaid diagrams, or view the README through a Markdown viewer that supports Mermaid.
+
+
 ## Features
 - User registration and authentication
 - Employee management (add, view, delete)
