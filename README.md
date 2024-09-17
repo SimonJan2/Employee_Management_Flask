@@ -11,51 +11,103 @@ Below is a high-level architecture diagram of the Employee Management System:
 
 ```mermaid
 graph TB
+    subgraph "User Interaction"
+        User["User/Browser"]
+        AdminUser["Admin User"]
+    end
+
     subgraph "AWS Cloud"
         VPC["VPC"]
         subgraph "Public Subnet 1"
             ALB["Application Load Balancer"]
-            EC2_1["EC2 Instance 1"]
+            EC2_1["EC2 Instance 1<br>Docker Container"]
         end
         subgraph "Public Subnet 2"
-            EC2_2["EC2 Instance 2"]
+            EC2_2["EC2 Instance 2<br>Docker Container"]
         end
         ASG["Auto Scaling Group"]
         S3["S3 Bucket<br>(Employee Photos)"]
         RDS["RDS MariaDB"]
         TFS3["S3 Bucket<br>(Terraform State)"]
+        
+        subgraph "EC2 Instance Components"
+            Flask["Flask Application"]
+            Gunicorn["Gunicorn WSGI Server"]
+            DockerEngine["Docker Engine"]
+        end
     end
+
     subgraph "External Services"
-        GH["GitHub"]
+        GH["GitHub Repository"]
         DH["Docker Hub"]
     end
+
     subgraph "CI/CD Pipeline"
         GHA["GitHub Actions"]
+        subgraph "Docker Workflow"
+            DW1["Build Docker Image"]
+            DW2["Push to Docker Hub"]
+            DW3["Update Terraform Vars"]
+        end
+        subgraph "Terraform Workflow"
+            TW1["Plan Infrastructure"]
+            TW2["Apply Changes"]
+            TW3["Deploy to EC2"]
+        end
     end
-    
-    User["User"] -->|"HTTPS"| ALB
+
+    subgraph "Application Components"
+        Routes["Routes (routes.py)"]
+        Models["Models (models.py)"]
+        Forms["Forms (forms.py)"]
+        Templates["HTML Templates"]
+        StaticFiles["Static Files (JS/CSS)"]
+        S3Utils["S3 Utilities (s3_utils.py)"]
+    end
+
+    User -->|"HTTPS"| ALB
+    AdminUser -->|"HTTPS"| ALB
     ALB -->|"HTTP"| EC2_1
     ALB -->|"HTTP"| EC2_2
-    EC2_1 -->|"SQL"| RDS
-    EC2_2 -->|"SQL"| RDS
-    EC2_1 -->|"S3 API"| S3
-    EC2_2 -->|"S3 API"| S3
+    EC2_1 --> DockerEngine
+    EC2_2 --> DockerEngine
+    DockerEngine --> Flask
+    Flask --> Gunicorn
+    
+    Flask --> Routes
+    Routes --> Models
+    Routes --> Forms
+    Routes --> Templates
+    Routes --> StaticFiles
+    Routes --> S3Utils
+    
+    Models -->|"SQL Queries"| RDS
+    S3Utils -->|"S3 API Calls"| S3
+    
     ASG -->|"Manages"| EC2_1
     ASG -->|"Manages"| EC2_2
     
     GH -->|"Trigger"| GHA
-    GHA -->|"Build & Push"| DH
-    GHA -->|"Deploy"| EC2_1
-    GHA -->|"Deploy"| EC2_2
-    GHA -->|"Manage Infrastructure"| VPC
-    GHA -->|"Store State"| TFS3
+    GHA --> DW1
+    DW1 --> DW2
+    DW2 --> DW3
+    DW3 -->|"Trigger"| TW1
+    TW1 --> TW2
+    TW2 --> TW3
+    TW3 -->|"Update"| EC2_1
+    TW3 -->|"Update"| EC2_2
+    DW2 -->|"Push Image"| DH
+    TW2 -->|"Manage"| VPC
+    TW2 -->|"Store State"| TFS3
     
     classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px;
     classDef external fill:#1EC9E8,stroke:#232F3E,stroke-width:2px;
     classDef cicd fill:#4CAF50,stroke:#232F3E,stroke-width:2px;
-    class ALB,EC2_1,EC2_2,ASG,S3,RDS,VPC,TFS3 aws;
+    classDef app fill:#7B68EE,stroke:#232F3E,stroke-width:2px;
+    class ALB,EC2_1,EC2_2,ASG,S3,RDS,VPC,TFS3,DockerEngine aws;
     class GH,DH external;
-    class GHA cicd;
+    class GHA,DW1,DW2,DW3,TW1,TW2,TW3 cicd;
+    class Flask,Gunicorn,Routes,Models,Forms,Templates,StaticFiles,S3Utils app;
 ```
 
 This diagram illustrates the main components of the system and their interactions:
