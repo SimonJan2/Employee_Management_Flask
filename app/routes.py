@@ -8,6 +8,9 @@ from app.models import User, Employee
 from app.forms import LoginForm, RegistrationForm, EmployeeForm
 from app.models import Ticket
 from app.forms import TicketForm, TicketResponseForm
+from app.s3_utils import upload_file_to_s3, delete_file_from_s3
+import uuid
+import io
 
 main = Blueprint('main', __name__)
 
@@ -75,23 +78,31 @@ def employee_profile(id):
 def add_employee():
     form = EmployeeForm()
     if form.validate_on_submit():
-        filename = None
+        picture_url = None
         if form.picture.data:
-            filename = secure_filename(form.picture.data.filename)
-            form.picture.data.save(os.path.join('app', 'static', 'uploads', filename))
-        
+            try:
+                file_stream = io.BytesIO(form.picture.data.read())
+                filename = f"{uuid.uuid4()}.{form.picture.data.filename.split('.')[-1]}"
+                picture_url = upload_file_to_s3(file_stream, filename)
+                if not picture_url:
+                    flash('Error uploading image to S3', 'error')
+                    return render_template('add_employee.html', form=form)
+            except Exception as e:
+                flash(f'Error processing image: {str(e)}', 'error')
+                return render_template('add_employee.html', form=form)
+
         employee = Employee(
             full_name=form.full_name.data,
             age=form.age.data,
             phone_number=form.phone_number.data,
             email=form.email.data,
             role=form.role.data,
-            picture=filename,
+            picture_url=picture_url,
             user_id=current_user.id
         )
         db.session.add(employee)
         db.session.commit()
-        flash('Employee added successfully')
+        flash('Employee added successfully', 'success')
         return redirect(url_for('main.employee_list'))
     return render_template('add_employee.html', form=form)
 
@@ -101,7 +112,18 @@ def delete_employee(id):
     if not current_user.is_admin:
         flash('You do not have permission to delete employees.')
         return redirect(url_for('main.employee_list'))
+    
     employee = Employee.query.get_or_404(id)
+    
+    # Delete the profile picture from S3 if it exists
+    if employee.picture_url:
+        # Extract the filename from the URL
+        filename = employee.picture_url.split('/')[-1]
+        if delete_file_from_s3(filename):
+            print(f"Successfully deleted {filename} from S3")
+        else:
+            print(f"Failed to delete {filename} from S3")
+    
     db.session.delete(employee)
     db.session.commit()
     flash('Employee deleted successfully')

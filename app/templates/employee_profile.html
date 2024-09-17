@@ -7,7 +7,7 @@
     <div class="row">
         <div class="col-md-4">
             <div class="card mb-4">
-                <img src="{{ url_for('static', filename='uploads/' + employee.picture) if employee.picture else 'https://via.placeholder.com/150' }}" 
+                <img src="{{ employee.picture_url if employee.picture_url else 'https://via.placeholder.com/150' }}" alt="{{ employee.full_name }}" class="card-img-top"> 
                      class="card-img-top employee-profile-img" 
                      alt="{{ employee.full_name }}">
                 <div class="card-body">

@@ -47,6 +47,9 @@ jobs:
           context: .
           push: true
           tags: simonjan2/employee_management_flask_test:${{ steps.version.outputs.NEW_VERSION }}
+          build-args: |
+            S3_BUCKET_EMPLOYEE_PHOTOS=${{ secrets.S3_BUCKET_EMPLOYEE_PHOTOS }}
+            S3_REGION=${{ secrets.S3_REGION }}
 
       - name: Commit and push if changes
         run: |

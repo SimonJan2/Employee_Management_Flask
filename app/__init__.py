@@ -9,6 +9,9 @@ login_manager = LoginManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    
+    print(f"S3_BUCKET in app config: {app.config['S3_BUCKET']}")
+    print(f"S3_REGION in app config: {app.config['S3_REGION']}")
 
     db.init_app(app)
     login_manager.init_app(app)

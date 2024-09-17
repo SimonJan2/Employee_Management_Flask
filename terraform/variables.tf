@@ -117,3 +117,18 @@ variable "key_name" {
   description = "Name of the SSH key pair"
   type        = string
 }
+
+variable "s3_bucket" {
+  description = "Name of the S3 bucket for employee photos"
+  type        = string
+}
+
+variable "s3_region" {
+  description = "AWS region for the S3 bucket"
+  type        = string
+}
+
+variable "s3_bucket_employee_photos" {
+  description = "Name of the S3 bucket for employee photos"
+  type        = string
+}

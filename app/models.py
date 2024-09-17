@@ -28,7 +28,7 @@ class Employee(db.Model):
     phone_number = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     role = db.Column(db.String(50), nullable=False)
-    picture = db.Column(db.String(200))
+    picture_url = db.Column(db.String(500))  # Change from picture to picture_url
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', back_populates='employee')
     tickets = db.relationship('Ticket', back_populates='employee', lazy='dynamic')

@@ -7,7 +7,7 @@
     {% for employee in employees %}
     <div class="col">
         <div class="card employee-card h-100">
-            <img src="{{ url_for('static', filename='uploads/' + employee.picture) if employee.picture else 'https://via.placeholder.com/150' }}" class="card-img-top" alt="{{ employee.full_name }}">
+            <img src="{{ employee.picture_url if employee.picture_url else 'https://via.placeholder.com/150' }}" alt="{{ employee.full_name }}" class="card-img-top">
             <div class="card-body">
                 <h5 class="card-title">{{ employee.full_name }}</h5>
                 <p class="card-text">{{ employee.role }}</p>

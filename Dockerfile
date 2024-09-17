@@ -7,6 +7,17 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+ARG S3_BUCKET_EMPLOYEE_PHOTOS
+ARG S3_REGION
+
+# Update these lines
+ENV S3_BUCKET_EMPLOYEE_PHOTOS=${S3_BUCKET_EMPLOYEE_PHOTOS}
+ENV S3_REGION=${S3_REGION}
+
+# Add these lines
+ENV S3_BUCKET=${S3_BUCKET}
+ENV S3_REGION=${S3_REGION}
+
 # Copy and install Python dependencies
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
