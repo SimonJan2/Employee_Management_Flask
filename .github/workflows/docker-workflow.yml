@@ -13,8 +13,8 @@ on:
     paths-ignore:
       - 'README.md'
       - 'terraform/**'
-  repository_dispatch:
-    types: [docker-update]
+  # repository_dispatch:
+  #   types: [docker-update]
 jobs:
   docker:
     runs-on: ubuntu-latest
