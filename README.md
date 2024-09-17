@@ -299,6 +299,11 @@ In addition to the GitHub secrets, make sure to set the following environment va
 3. Implement blue-green deployments or canary releases for zero-downtime updates.
 4. Set up monitoring and alerting for the CI/CD process and application health.
 
+## Screenshots
+![Employee](Readme/Employee.png)
+
+![Tickets](Readme/Tickets.png)
+
 ## Contributing
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
 
