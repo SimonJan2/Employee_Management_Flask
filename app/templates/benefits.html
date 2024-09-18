@@ -1,35 +1,124 @@
 {% extends "base.html" %}
-
 {% block title %}Employee Benefits{% endblock %}
-
 {% block content %}
+
 <div class="container">
     <h1 class="mb-4">Employee Benefits</h1>
-    <div class="card">
-        <div class="card-body">
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                    <h5 class="mb-1"><i class="fas fa-heart text-primary mr-2"></i> Health Insurance</h5>
-                    <p class="mb-0">Comprehensive health coverage for you and your family.</p>
-                </li>
-                <li class="list-group-item">
-                    <h5 class="mb-1"><i class="fas fa-tooth text-primary mr-2"></i> Dental Insurance</h5>
-                    <p class="mb-0">Keep your smile bright with our dental coverage.</p>
-                </li>
-                <li class="list-group-item">
-                    <h5 class="mb-1"><i class="fas fa-piggy-bank text-primary mr-2"></i> 401(k) Retirement Plan</h5>
-                    <p class="mb-0">Plan for your future with our competitive 401(k) options.</p>
-                </li>
-                <li class="list-group-item">
-                    <h5 class="mb-1"><i class="fas fa-umbrella-beach text-primary mr-2"></i> Paid Time Off</h5>
-                    <p class="mb-0">Generous vacation and personal days to help you recharge.</p>
-                </li>
-                <li class="list-group-item">
-                    <h5 class="mb-1"><i class="fas fa-graduation-cap text-primary mr-2"></i> Professional Development Opportunities</h5>
-                    <p class="mb-0">Grow your skills with our training and development programs.</p>
-                </li>
-            </ul>
+
+    <div class="accordion" id="benefitsAccordion">
+        <div class="card">
+            <div class="card-header" id="healthInsurance">
+                <h2 class="mb-0">
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseHealth" aria-expanded="true" aria-controls="collapseHealth">
+                        Health Insurance
+                    </button>
+                </h2>
+            </div>
+            <div id="collapseHealth" class="collapse show" aria-labelledby="healthInsurance" data-parent="#benefitsAccordion">
+                <div class="card-body">
+                    <h5 class="card-title">Comprehensive health coverage for you and your family.</h5>
+                    <ul>
+                        <li>Multiple plan options to suit your needs</li>
+                        <li>Low deductibles and co-pays</li>
+                        <li>Extensive network of healthcare providers</li>
+                        <li>Coverage for preventive care, hospitalization, and prescription drugs</li>
+                        <li>Option for Health Savings Account (HSA)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" id="dentalInsurance">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseDental" aria-expanded="false" aria-controls="collapseDental">
+                        Dental Insurance
+                    </button>
+                </h2>
+            </div>
+            <div id="collapseDental" class="collapse" aria-labelledby="dentalInsurance" data-parent="#benefitsAccordion">
+                <div class="card-body">
+                    <h5 class="card-title">Keep your smile bright with our dental coverage.</h5>
+                    <ul>
+                        <li>100% coverage for preventive care (cleanings, x-rays)</li>
+                        <li>80% coverage for basic procedures (fillings, extractions)</li>
+                        <li>50% coverage for major procedures (crowns, bridges)</li>
+                        <li>Orthodontic coverage for children up to age 19</li>
+                        <li>Annual maximum benefit of $2,000 per person</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" id="retirementPlan">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseRetirement" aria-expanded="false" aria-controls="collapseRetirement">
+                        401(k) Retirement Plan
+                    </button>
+                </h2>
+            </div>
+            <div id="collapseRetirement" class="collapse" aria-labelledby="retirementPlan" data-parent="#benefitsAccordion">
+                <div class="card-body">
+                    <h5 class="card-title">Plan for your future with our competitive 401(k) options.</h5>
+                    <ul>
+                        <li>Company match of 100% on the first 3% of your contribution</li>
+                        <li>Additional 50% match on the next 2% of your contribution</li>
+                        <li>Immediate vesting for your contributions and company match</li>
+                        <li>Wide range of investment options</li>
+                        <li>Roth 401(k) option available</li>
+                        <li>Financial advisors available for consultation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" id="paidTimeOff">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapsePTO" aria-expanded="false" aria-controls="collapsePTO">
+                        Paid Time Off
+                    </button>
+                </h2>
+            </div>
+            <div id="collapsePTO" class="collapse" aria-labelledby="paidTimeOff" data-parent="#benefitsAccordion">
+                <div class="card-body">
+                    <h5 class="card-title">Generous vacation and personal days to help you recharge.</h5>
+                    <ul>
+                        <li>Starting at 15 days of PTO per year, increasing with tenure</li>
+                        <li>5 sick days per year</li>
+                        <li>10 paid holidays per year</li>
+                        <li>Option to purchase additional PTO days</li>
+                        <li>PTO rollover up to 5 days per year</li>
+                        <li>Sabbatical program for long-term employees</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" id="professionalDevelopment">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapsePD" aria-expanded="false" aria-controls="collapsePD">
+                        Professional Development Opportunities
+                    </button>
+                </h2>
+            </div>
+            <div id="collapsePD" class="collapse" aria-labelledby="professionalDevelopment" data-parent="#benefitsAccordion">
+                <div class="card-body">
+                    <h5 class="card-title">Grow your skills with our training and development programs.</h5>
+                    <ul>
+                        <li>Annual training budget of $2,000 per employee</li>
+                        <li>Access to online learning platforms</li>
+                        <li>In-house workshops and seminars</li>
+                        <li>Mentorship program</li>
+                        <li>Tuition reimbursement for job-related courses</li>
+                        <li>Conference attendance opportunities</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
