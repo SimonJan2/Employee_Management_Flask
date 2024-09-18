@@ -1,7 +1,7 @@
 # Employee Management System
 
 ![Index2](Readme/Index2.png)
-
+![Index2](Readme/diagram2.png)
 ## Overview
 This project is an Employee Management System built with Flask, featuring Docker containerization and Terraform for infrastructure deployment on AWS. It provides functionality for managing employees, handling tickets, and user authentication.
 
@@ -125,8 +125,9 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 </details>
 </details><details open><summary><strong>Click to collapse</strong></summary>
 <!-- <details><summary>Click to expand Draw.io diagram</summary> -->
-![Drawio](Readme/diagram2.png)
+
 </details>
+![drawio](Readme/diagram2.png)
 
 ## Features
 - User registration and authentication
