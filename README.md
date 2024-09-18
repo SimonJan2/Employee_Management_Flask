@@ -126,8 +126,11 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 </details><details open><summary><strong>Click to collapse</strong></summary>
 <!-- <details><summary>Click to expand Draw.io diagram</summary> -->
 
-</details>
 ![drawio](Readme/diagram2.png)
+
+</details>
+
+
 
 ## Features
 - User registration and authentication
