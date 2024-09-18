@@ -109,6 +109,7 @@ graph TB
     class GHA,DW1,DW2,DW3,TW1,TW2,TW3 cicd;
     class Flask,Gunicorn,Routes,Models,Forms,Templates,StaticFiles,S3Utils app;
 ```
+</details>
 
 This diagram illustrates the main components of the system and their interactions:
 
