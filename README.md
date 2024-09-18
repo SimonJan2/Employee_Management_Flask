@@ -172,6 +172,7 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 ```
 
 ## Setup and Installation
+<details><summary>Click to expand Mermaid diagram</summary>
 
 ### Local Development
 1. Clone the repository:
@@ -251,6 +252,8 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
    ```
 
 5. After successful application, Terraform will output the application URL.
+
+</details>
 
 ## CI/CD
 
