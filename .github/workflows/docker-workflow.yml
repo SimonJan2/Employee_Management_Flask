@@ -1,20 +1,20 @@
 name: Docker Build and Push
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #   paths-ignore:
-  #     - 'README.md'
-  #   #   - 'terraform/**'
-  # pull_request:
-  #   branches:
-  #     - main
-  #   paths-ignore:
-  #     - 'README.md'
-  #     - 'terraform/**'
-  repository_dispatch:
-    types: [docker-update]
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+    #   - 'terraform/**'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'terraform/**'
+  # repository_dispatch:
+  #   types: [docker-update]
 jobs:
   docker:
     runs-on: ubuntu-latest
