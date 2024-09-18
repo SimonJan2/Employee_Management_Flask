@@ -2,10 +2,15 @@
 
 ![Index2](Readme/Index2.png)
 
-## Overview
+<details open>
+<summary><strong>Overview</strong></summary>
+
 This project is an Employee Management System built with Flask, featuring Docker containerization and Terraform for infrastructure deployment on AWS. It provides functionality for managing employees, handling tickets, and user authentication.
 
-## Architecture
+</details>
+
+<details open>
+<summary><strong>Architecture</strong></summary>
 
 Below is a high-level architecture diagram of the Employee Management System:
 
@@ -121,8 +126,11 @@ The arrows show the flow of data and interactions between different components, 
 
 Note: To view this diagram on GitHub, you may need to use a browser extension that renders Mermaid diagrams, or view the README through a Markdown viewer that supports Mermaid.
 
+</details>
 
-## Features
+<details open>
+<summary><strong>Features</strong></summary>
+
 - User registration and authentication
 - Employee management (add, view, delete)
 - Ticket system for employee requests and issues
@@ -130,7 +138,11 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 - S3 integration for employee profile picture storage
 - Responsive design with particle.js background
 
-## Tech Stack
+</details>
+
+<details open>
+<summary><strong>Tech Stack</strong></summary>
+
 - Backend: Flask
 - Database: MariaDB
 - Frontend: HTML, CSS, JavaScript (with particle.js)
@@ -139,7 +151,11 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 - Cloud Provider: AWS
 - CI/CD: GitHub Actions
 
-## Project Structure
+</details>
+
+<details open>
+<summary><strong>Project Structure</strong></summary>
+
 ```
 .
 ├── .github/workflows/      # GitHub Actions workflows
@@ -162,7 +178,10 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 └── README.md               # This file
 ```
 
-## Setup and Installation
+</details>
+
+<details open>
+<summary><strong>Setup and Installation</strong></summary>
 
 ### Local Development
 1. Clone the repository:
@@ -243,7 +262,10 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 
 5. After successful application, Terraform will output the application URL.
 
-## CI/CD
+</details>
+
+<details open>
+<summary><strong>CI/CD</strong></summary>
 
 This project implements a Continuous Integration and Continuous Deployment (CI/CD) pipeline using GitHub Actions. The pipeline automates the process of building, testing, and deploying the application whenever changes are pushed to the main branch.
 
@@ -351,7 +373,13 @@ In addition to the GitHub secrets, make sure to set the following environment va
 3. Implement blue-green deployments or canary releases for zero-downtime updates.
 4. Set up monitoring and alerting for the CI/CD process and application health.
 
-## Screenshots
+</details>
+
+<details open>
+<summary><strong>Screenshots</strong></summary>
+
 ![Employee](Readme/Employee.png)
 
 ![Tickets](Readme/Tickets.png)
+
+</details>
