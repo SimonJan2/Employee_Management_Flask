@@ -122,7 +122,7 @@ The arrows show the flow of data and interactions between different components, 
 
 Note: To view this diagram on GitHub, you may need to use a browser extension that renders Mermaid diagrams, or view the README through a Markdown viewer that supports Mermaid.
 </details>
-</details><details open><summary><strong>Click to collapse</strong></summary>
+</details><details open><summary><strong>Click to collapse drowio diagram</strong></summary>
 <!-- <details><summary>Click to expand Draw.io diagram</summary> -->
 
 ![drawio](Readme/diagram2.png)
