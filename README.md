@@ -265,7 +265,7 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 </details>
 
 <details open>
-<summary><strong>CI/CD</strong></summary>
+<summary><strong>## CI/CD</strong></summary>
 
 This project implements a Continuous Integration and Continuous Deployment (CI/CD) pipeline using GitHub Actions. The pipeline automates the process of building, testing, and deploying the application whenever changes are pushed to the main branch.
 
