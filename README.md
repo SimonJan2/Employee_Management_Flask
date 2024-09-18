@@ -7,7 +7,7 @@ This project is an Employee Management System built with Flask, featuring Docker
 
 ## Architecture
 <!-- </details><details open><summary><strong>Click to collapse</strong></summary> -->
-<details><summary>Click to expand</summary>
+<details><summary>Click to expand Mermaid diagram</summary>
 Below is a high-level architecture diagram of the Employee Management System:
 
 ```mermaid
@@ -122,6 +122,10 @@ This diagram illustrates the main components of the system and their interaction
 The arrows show the flow of data and interactions between different components, providing a clear overview of how the system operates.
 
 Note: To view this diagram on GitHub, you may need to use a browser extension that renders Mermaid diagrams, or view the README through a Markdown viewer that supports Mermaid.
+</details>
+</details><details open><summary><strong>Click to collapse</strong></summary>
+<!-- <details><summary>Click to expand Draw.io diagram</summary> -->
+![Drawio](Readme/diagram2.png)
 </details>
 
 ## Features
