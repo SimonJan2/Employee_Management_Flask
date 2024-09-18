@@ -176,8 +176,8 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 ### Local Development
 1. Clone the repository:
    ```
-   git clone <repository-url>
-   cd employee-management-system
+   git clone https://github.com/SimonJan2/Employee_Management_Flask.git
+   cd Employee_Management_Flask
    ```
 
 2. Set up a virtual environment:
