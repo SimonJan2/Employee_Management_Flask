@@ -172,7 +172,7 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 ```
 
 ## Setup and Installation
-<details><summary>Click to expand Mermaid diagram</summary>
+<details><summary>Click to expand installation instructions</summary>
 
 ### Local Development
 1. Clone the repository:
