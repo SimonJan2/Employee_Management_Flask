@@ -257,6 +257,8 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 
 ## CI/CD
 
+<details><summary>Click to expand CI/CD instructions</summary>
+
 This project implements a Continuous Integration and Continuous Deployment (CI/CD) pipeline using GitHub Actions. The pipeline automates the process of building, testing, and deploying the application whenever changes are pushed to the main branch.
 
 ### Workflows
@@ -362,6 +364,8 @@ In addition to the GitHub secrets, make sure to set the following environment va
 2. Add a staging environment for testing changes before production deployment.
 3. Implement blue-green deployments or canary releases for zero-downtime updates.
 4. Set up monitoring and alerting for the CI/CD process and application health.
+
+</details>
 
 ## Screenshots
 ![Employee](Readme/Employee.png)
