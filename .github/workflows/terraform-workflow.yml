@@ -53,6 +53,7 @@ jobs:
           }
           EOF
       
+        # Debug NEW_VERSION from client payload event
       - name: Debug NEW_VERSION
         if: github.event_name == 'repository_dispatch'
         run: |
@@ -61,16 +62,20 @@ jobs:
           echo "NEW_VERSION env var: ${{ env.NEW_VERSION }}"
           echo "All environment variables:"
           env
-
+        
+        # Initialize terraform
       - name: Terraform Init
         run: terraform init
-
+        
+        # Validate terraform files using terraform validate
       - name: Terraform Validate
         run: terraform validate
-
+        
+        # Format terraform files using terraform fmt
       - name: Terraform fmt
         run: terraform fmt
-
+        
+        # Plan terraform files using terraform plan
       - name: Terraform Plan
         run: |
           terraform plan -var="s3_bucket=${S3_BUCKET}" -var="s3_region=${S3_REGION}" -out=tfplan
@@ -78,20 +83,24 @@ jobs:
           S3_BUCKET: ${{ secrets.S3_BUCKET_EMPLOYEE_PHOTOS }}
           S3_REGION: ${{ secrets.S3_REGION }}
 
+        # Apply terraform files using terraform apply
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'repository_dispatch')
         run: terraform apply -auto-approve tfplan
-      
+
+        # Verify Terraform and AWS CLI
       - name: Verify Terraform and AWS CLI installations
         run: |
           echo "Terraform version:"
           terraform version
           echo "AWS CLI version:"
           aws --version
-      
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-      
+
+      #   # Install jq (JSON query tool)
+      # - name: Install jq
+      #   run: sudo apt-get update && sudo apt-get install -y jq
+        
+        # Verify S3 Backend and Terraform state
       - name: Verify S3 Backend
         run: |
           echo "Checking S3 bucket..."
@@ -99,6 +108,7 @@ jobs:
           echo "Checking Terraform state file..."
           aws s3 ls s3://${{ secrets.BUCKET_TF_STATE }}/terraform/python-master-project.tfstate
 
+        # Describe Auto Scaling Group and get EC2 Instance IPs
       - name: Describe Auto Scaling Group
         if: github.ref == 'refs/heads/main' && github.event_name == 'repository_dispatch'
         env:
@@ -139,11 +149,13 @@ jobs:
         run: |
           cat << 'EOT' > deploy_script.sh
           #!/bin/bash
+          # the set -ex flag makes the shell script exit if any command has non-zero exit code
           set -ex
           echo "Current directory: $(pwd)"
           echo "Docker version: $(sudo docker --version)"
           echo "New version: ${NEW_VERSION}"
           
+          # Check if NEW_VERSION is set by GitHub Actions
           if [ -z "${NEW_VERSION}" ]; then
             echo "Error: NEW_VERSION is not set"
             exit 1
@@ -154,14 +166,17 @@ jobs:
           
           echo "Stopping and removing existing containers..."
           sudo docker ps -a
-          sudo docker stop app || true
+          sudo docker stop app || true # the true is to avoid an error if the container doesn't exist
           sudo docker rm app || true
           
           echo "Checking if port 80 is in use..."
+          # lsof is a command line tool that shows all open files on the system
           sudo lsof -i :80 || echo "No process found using lsof"
+          # netstat is a command line tool that shows all open ports on the system
           sudo netstat -tuln | grep :80 || echo "No process found using netstat"
           
           echo "Stopping any process using port 80..."
+          # fuser is a command line tool that checks if a process is using a port
           sudo fuser -k 80/tcp || echo "No process killed by fuser"
           
           echo "Waiting for port to be released..."
@@ -228,7 +243,7 @@ jobs:
           echo "Terraform Show:"
           terraform show || echo "Failed to show state"
           echo "Environment Variables:"
-          env | grep -v -e AWS -e SECRET 
+          env | grep -v -e AWS -e SECRET
 
       # - name: Terraform Destroy
       #   if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'repository_dispatch')

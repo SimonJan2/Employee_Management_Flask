@@ -5,18 +5,19 @@ RUN apt-get update && apt-get install -y \
     netcat \
     && rm -rf /var/lib/apt/lists/*
 
+# Set the working directory
 WORKDIR /app
 
+# ARG is a shell variable that can be set in the Dockerfile
 ARG S3_BUCKET_EMPLOYEE_PHOTOS
 ARG S3_REGION
 
 # Update these lines
+# ENV is an environment variable that can be set in the Dockerfile
 ENV S3_BUCKET_EMPLOYEE_PHOTOS=${S3_BUCKET_EMPLOYEE_PHOTOS}
 ENV S3_REGION=${S3_REGION}
-
-# Add these lines
 ENV S3_BUCKET=${S3_BUCKET}
-ENV S3_REGION=${S3_REGION}
+
 
 # Copy and install Python dependencies
 COPY requirements.txt requirements.txt

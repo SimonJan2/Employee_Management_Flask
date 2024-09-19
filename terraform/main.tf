@@ -67,11 +67,6 @@ resource "aws_route_table" "main" {
   }
 }
 
-# resource "aws_route_table_association" "main" {
-#   subnet_id      = aws_subnet.main.id
-#   route_table_id = aws_route_table.main.id
-# }
-
 # Define the security groups
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-alb-sg"
@@ -121,22 +116,6 @@ resource "aws_security_group" "main" {
     security_groups = [aws_security_group.alb.id]
   }
 
-  # ingress {
-  #   description = "talk to mysql"
-  #   from_port   = 3306
-  #   to_port     = 3306
-  #   protocol    = "tcp"
-  #   cidr_blocks = ["0.0.0.0/0"]
-  # }
-
-  # ingress {
-  #   description = "Flask from anywhere"
-  #   from_port   = 5000
-  #   to_port     = 5000
-  #   protocol    = "tcp"
-  #   cidr_blocks = ["0.0.0.0/0"]
-  # }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -149,26 +128,6 @@ resource "aws_security_group" "main" {
   }
 }
 
-# resource "aws_instance" "main" {
-#   ami           = var.ami_id
-#   instance_type = var.instance_type
-
-#   vpc_security_group_ids = [aws_security_group.main.id]
-#   subnet_id              = aws_subnet.main.id
-#   # key_name               = var.key_name
-
-#   user_data = templatefile("userdata.sh", {
-#     app_version = var.app_version
-#   })
-
-#   tags = {
-#     Name = "${var.project_name}-instance"
-#   }
-
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
 ############################# Load Balancer ###############################
 # Update the ALB to use both subnets
 resource "aws_lb" "main" {
