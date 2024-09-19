@@ -125,7 +125,7 @@ Note: To view this diagram on GitHub, you may need to use a browser extension th
 </details><details open><summary><strong>Click to collapse drowio diagram</strong></summary>
 <!-- <details><summary>Click to expand Draw.io diagram</summary> -->
 
-![drawio](Readme/diagram2.png)
+![drawio](Readme/Diagram.png)
 
 </details>
 
