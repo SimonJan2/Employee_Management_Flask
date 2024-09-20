@@ -64,7 +64,7 @@ class TrainingRecordForm(FlaskForm):
     submit = SubmitField('Submit')
 
 class MessageForm(FlaskForm):
-    recipient = StringField('Recipient', validators=[DataRequired()])
+    recipient = SelectField('Recipient', validators=[DataRequired()], coerce=int)
     subject = StringField('Subject', validators=[DataRequired(), Length(max=100)])
     body = TextAreaField('Message', validators=[DataRequired()])
     submit = SubmitField('Send Message')
