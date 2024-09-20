@@ -96,6 +96,9 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
 
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
+
     def __init__(self, sender_id, recipient_id, subject, body):
         self.sender_id = sender_id
         self.recipient_id = recipient_id
