@@ -1,0 +1,250 @@
+name: Terraform Apply
+
+on:
+
+  repository_dispatch:
+    types: [docker-update]
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'terraform/**'
+  # pull_request:
+  #   paths:
+  #     - 'terraform/**'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}
+      AWS_REGION: ${{ secrets.BACKEND_REGION }}
+      NEW_VERSION: ${{ github.event.client_payload.app_version }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET_EMPLOYEE_PHOTOS }}
+      S3_REGION: ${{ secrets.S3_REGION }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+            
+      - name: Echo client payload
+        run: |
+          echo "Client payload: ${{ toJson(github.event.client_payload) }}"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.0
+
+      - name: Create backend.tf
+        run: |
+          cat <<EOF > backend.tf
+          terraform {
+            backend "s3" {
+              bucket = "${{ secrets.BUCKET_TF_STATE }}"
+              key    = "terraform/python-master-project.tfstate"
+              region = "${{ secrets.BACKEND_REGION }}"
+            }
+          }
+          EOF
+      
+        # Debug NEW_VERSION from client payload event
+      - name: Debug NEW_VERSION
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "New version from client payload: ${{ github.event.client_payload.app_version }}"
+          echo "NEW_VERSION env var: ${{ env.NEW_VERSION }}"
+          echo "All environment variables:"
+          env
+        
+        # Initialize terraform
+      - name: Terraform Init
+        run: terraform init
+        
+        # Validate terraform files using terraform validate
+      - name: Terraform Validate
+        run: terraform validate
+        
+        # Format terraform files using terraform fmt
+      - name: Terraform fmt
+        run: terraform fmt
+        
+        # Plan terraform files using terraform plan
+      - name: Terraform Plan
+        run: |
+          terraform plan -var="s3_bucket=${S3_BUCKET}" -var="s3_region=${S3_REGION}" -out=tfplan
+        env:
+          S3_BUCKET: ${{ secrets.S3_BUCKET_EMPLOYEE_PHOTOS }}
+          S3_REGION: ${{ secrets.S3_REGION }}
+
+        # Apply terraform files using terraform apply
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'repository_dispatch')
+        run: terraform apply -auto-approve tfplan
+
+        # Verify Terraform and AWS CLI
+      - name: Verify Terraform and AWS CLI installations
+        run: |
+          echo "Terraform version:"
+          terraform version
+          echo "AWS CLI version:"
+          aws --version
+
+      #   # Install jq (JSON query tool)
+      # - name: Install jq
+      #   run: sudo apt-get update && sudo apt-get install -y jq
+        
+        # Verify S3 Backend and Terraform state
+      - name: Verify S3 Backend
+        run: |
+          echo "Checking S3 bucket..."
+          aws s3 ls s3://${{ secrets.BUCKET_TF_STATE }}
+          echo "Checking Terraform state file..."
+          aws s3 ls s3://${{ secrets.BUCKET_TF_STATE }}/terraform/python-master-project.tfstate
+
+        # Describe Auto Scaling Group and get EC2 Instance IPs
+      - name: Describe Auto Scaling Group
+        if: github.ref == 'refs/heads/main' && github.event_name == 'repository_dispatch'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[*].AutoScalingGroupName" --output text)
+          echo "ASG Name from AWS CLI: $ASG_NAME"
+          aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $ASG_NAME
+          echo "Retrieving instance IPs..."
+          aws ec2 describe-instances --filters "Name=tag:aws:autoscaling:groupName,Values=$ASG_NAME" --query "Reservations[*].Instances[*].[InstanceId,PublicIpAddress]" --output table
+    
+      - name: Get EC2 Instance IPs
+        if: github.ref == 'refs/heads/main' && github.event_name == 'repository_dispatch'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          echo "Retrieving ASG name from AWS CLI..."
+          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[*].AutoScalingGroupName" --output text)
+          echo "ASG Name: $ASG_NAME"
+          if [ -z "$ASG_NAME" ]; then
+            echo "Failed to retrieve ASG name"
+            exit 1
+          fi
+          echo "Retrieving instance IPs..."
+          INSTANCE_IPS=$(aws ec2 describe-instances --filters "Name=tag:aws:autoscaling:groupName,Values=$ASG_NAME" --query "Reservations[*].Instances[*].PublicIpAddress" --output text | tr '\n' ' ' | xargs)
+          echo "INSTANCE_IPS=$INSTANCE_IPS"
+          if [ -z "$INSTANCE_IPS" ]; then
+            echo "No instance IPs found"
+            exit 1
+          fi
+          echo "INSTANCE_IPS=$INSTANCE_IPS" >> $GITHUB_ENV
+          
+      - name: Create deployment script
+        run: |
+          cat << 'EOT' > deploy_script.sh
+          #!/bin/bash
+          # the set -ex flag makes the shell script exit if any command has non-zero exit code
+          set -ex
+          echo "Current directory: $(pwd)"
+          echo "Docker version: $(sudo docker --version)"
+          echo "New version: ${NEW_VERSION}"
+          
+          # Check if NEW_VERSION is set by GitHub Actions
+          if [ -z "${NEW_VERSION}" ]; then
+            echo "Error: NEW_VERSION is not set"
+            exit 1
+          fi
+          
+          echo "Pulling new Docker image..."
+          sudo docker pull simonjan2/employee_management_flask_test:${NEW_VERSION}
+          
+          echo "Stopping and removing existing containers..."
+          sudo docker ps -a
+          sudo docker stop app || true # the true is to avoid an error if the container doesn't exist
+          sudo docker rm app || true
+          
+          echo "Checking if port 80 is in use..."
+          # lsof is a command line tool that shows all open files on the system
+          sudo lsof -i :80 || echo "No process found using lsof"
+          # netstat is a command line tool that shows all open ports on the system
+          sudo netstat -tuln | grep :80 || echo "No process found using netstat"
+          
+          echo "Stopping any process using port 80..."
+          # fuser is a command line tool that checks if a process is using a port
+          sudo fuser -k 80/tcp || echo "No process killed by fuser"
+          
+          echo "Waiting for port to be released..."
+          sleep 10
+          
+          echo "Running new container..."
+          sudo docker run --name app -d -p 80:5000 \
+            -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+            -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+            -e S3_BUCKET_EMPLOYEE_PHOTOS="${S3_BUCKET}" \
+            -e S3_REGION="${S3_REGION}" \
+            simonjan2/employee_management_flask_test:${NEW_VERSION}
+          
+          echo "Verifying new container..."
+          sudo docker ps -a
+          
+          echo "Checking port 80 usage after container start..."
+          sudo lsof -i :80 || echo "No process found using lsof after container start"
+          sudo netstat -tuln | grep :80 || echo "No process found using netstat after container start"
+          EOT
+      
+      - name: Execute commands on EC2 instances
+        if: github.ref == 'refs/heads/main' && github.event_name == 'repository_dispatch'
+        env:
+          EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET_EMPLOYEE_PHOTOS }}
+          S3_REGION: ${{ secrets.S3_REGION }}
+        run: |
+          echo "NEW_VERSION: $NEW_VERSION"
+          echo "$EC2_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          chmod +x deploy_script.sh
+          echo "Instance IPs: $INSTANCE_IPS"
+          for IP in $INSTANCE_IPS; do
+            echo "Connecting to instance $IP"
+            scp -o StrictHostKeyChecking=no -o ConnectTimeout=15 -i private_key.pem deploy_script.sh ec2-user@$IP:~/deploy_script.sh || { echo "Error: Could not connect to instance $IP" && exit 1; }
+            ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -i private_key.pem ec2-user@$IP "NEW_VERSION='$NEW_VERSION' AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID' AWS_SECRET_ACCESS_KEY='$AWS_SECRET_ACCESS_KEY' S3_BUCKET='$S3_BUCKET' S3_REGION='$S3_REGION' bash ~/deploy_script.sh" || { echo "Error: Could not connect to instance $IP" && exit 1; }
+          done
+          rm private_key.pem deploy_script.sh
+
+      - name: Output Application URL
+        if: github.event_name == 'push' || github.event_name == 'repository_dispatch'
+        run: |
+          APP_URL=$(terraform output -raw application_url || echo "Failed to get application_url")
+          echo "Application is now accessible at: $APP_URL"
+
+      - name: Output Deployment Info
+        if: github.event_name == 'push' || github.event_name == 'repository_dispatch'
+        run: |
+          TIMESTAMP=$(terraform output -raw deployment_timestamp || echo "Failed to get deployment_timestamp")
+          VERSION=$(terraform output -raw app_version || echo "Failed to get app_version")
+          echo "Deployment Timestamp: $TIMESTAMP"
+          echo "Deployed App Version: $VERSION"    
+          
+      - name: Debug Information
+        if: failure()
+        run: |
+          echo "Terraform Version:"
+          terraform version
+          echo "Terraform State List:"
+          terraform state list || echo "Failed to list state"
+          echo "Terraform Show:"
+          terraform show || echo "Failed to show state"
+          echo "Environment Variables:"
+          env | grep -v -e AWS -e SECRET
+
+      # - name: Terraform Destroy
+      #   if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'repository_dispatch')
+      #   run: terraform destroy -auto-approve
