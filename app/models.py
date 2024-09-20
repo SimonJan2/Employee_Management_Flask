@@ -96,5 +96,11 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
 
+    def __init__(self, sender_id, recipient_id, subject, body):
+        self.sender_id = sender_id
+        self.recipient_id = recipient_id
+        self.subject = subject
+        self.body = body
+
     def __repr__(self):
         return f'<Message {self.subject}>'

@@ -412,13 +412,14 @@ def delete_training_record(record_id):
 @login_required
 def send_message():
     form = MessageForm()
-    # Populate the choices for the recipient field
     form.recipient.choices = [(user.id, user.username) for user in User.query.filter(User.id != current_user.id).order_by(User.username)]
     
     if form.validate_on_submit():
         recipient = User.query.get(form.recipient.data)
-        msg = Message(sender=current_user, recipient=recipient,
-                      subject=form.subject.data, body=form.body.data)
+        msg = Message(sender_id=current_user.id, 
+                      recipient_id=recipient.id,
+                      subject=form.subject.data, 
+                      body=form.body.data)
         db.session.add(msg)
         db.session.commit()
         flash('Your message has been sent.', 'success')
