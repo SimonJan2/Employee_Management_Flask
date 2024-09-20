@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Your Messages</h1>
+    {% if messages %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>From</th>
+                    <th>Subject</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for message in messages %}
+                    <tr class="{{ 'font-weight-bold' if not message.read else '' }}">
+                        <td>{{ message.sender.username }}</td>
+                        <td>{{ message.subject }}</td>
+                        <td>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td><a href="{{ url_for('main.view_message', message_id=message.id) }}">View</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You have no messages.</p>
+    {% endif %}
+{% endblock %}
