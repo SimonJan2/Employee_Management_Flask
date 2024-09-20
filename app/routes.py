@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_from_directory
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -355,3 +355,18 @@ def ticket_detail(ticket_id):
         return redirect(url_for('main.view_tickets'))
     
     return render_template('ticket_detail.html', title='Ticket Detail', ticket=ticket, form=form)
+
+
+@main.route('/dashboard')
+@login_required
+def serve_react_app():
+    return send_from_directory('../react-dashboard/build', 'index.html')
+
+@main.route('/static/react/<path:path>')
+def serve_react_static(path):
+    return send_from_directory('../react-dashboard/build/static', path)
+
+# Add this new route to serve other files from the React build directory
+@main.route('/dashboard/<path:path>')
+def serve_react_files(path):
+    return send_from_directory('../react-dashboard/build', path)
