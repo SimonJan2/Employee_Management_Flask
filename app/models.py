@@ -14,8 +14,8 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     is_approved = db.Column(db.Boolean, default=False)
     employee = db.relationship('Employee', back_populates='user', uselist=False)
-    sent_messages = db.relationship('Message', foreign_keys='Message.sender_id', backref='sender_user', lazy='dynamic')
-    received_messages = db.relationship('Message', foreign_keys='Message.recipient_id', backref='recipient_user', lazy='dynamic')
+    # sent_messages = db.relationship('Message', foreign_keys='Message.sender_id', backref='sender_user', lazy='dynamic')
+    # received_messages = db.relationship('Message', foreign_keys='Message.recipient_id', backref='recipient_user', lazy='dynamic')
 
     def set_password(self, password):
         """
@@ -96,8 +96,8 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
 
-    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
-    recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
+    sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_messages', lazy='dynamic'))
+    recipient = db.relationship('User', foreign_keys=[recipient_id], backref=db.backref('received_messages', lazy='dynamic'))
 
     def __init__(self, sender_id, recipient_id, subject, body):
         self.sender_id = sender_id
