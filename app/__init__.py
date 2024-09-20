@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import Config
+from app.models import User, Employee, Ticket, TrainingRecord, Message
 
 # sqlalchemy is used to interact with the database by creating tables and inserting data.
 db = SQLAlchemy()

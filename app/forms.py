@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, TextAreaField, SelectField, DateField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
 from flask_wtf.file import FileField, FileAllowed
 from app.models import User
 
@@ -62,3 +62,9 @@ class TrainingRecordForm(FlaskForm):
     certification_name = StringField('Certification Name')
     certification_expiry = DateField('Certification Expiry Date')
     submit = SubmitField('Submit')
+
+class MessageForm(FlaskForm):
+    recipient = StringField('Recipient', validators=[DataRequired()])
+    subject = StringField('Subject', validators=[DataRequired(), Length(max=100)])
+    body = TextAreaField('Message', validators=[DataRequired()])
+    submit = SubmitField('Send Message')

@@ -40,6 +40,12 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ url_for('main.create_ticket') }}">Create Ticket</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.messages') }}">Messages</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.send_message') }}">Send Message</a>
+                            </li>
                             {% if current_user.is_admin %}
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ url_for('main.approve_users') }}">Approve Users</a>

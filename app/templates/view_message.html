@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Message</h1>
+    <div class="card">
+        <div class="card-header">
+            <strong>From:</strong> {{ message.sender.username }}<br>
+            <strong>Subject:</strong> {{ message.subject }}<br>
+            <strong>Date:</strong> {{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}
+        </div>
+        <div class="card-body">
+            {{ message.body | nl2br }}
+        </div>
+    </div>
+    <a href="{{ url_for('main.messages') }}" class="btn btn-primary mt-3">Back to Messages</a>
+{% endblock %}

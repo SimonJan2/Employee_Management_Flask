@@ -1,11 +1,11 @@
 import os
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import User, Employee, TrainingRecord
-from app.forms import LoginForm, RegistrationForm, EmployeeForm, TrainingRecordForm
+from app.models import User, Employee, TrainingRecord, Message
+from app.forms import LoginForm, RegistrationForm, EmployeeForm, TrainingRecordForm, MessageForm
 from app.models import Ticket
 from app.forms import TicketForm, TicketResponseForm
 from app.s3_utils import upload_file_to_s3, delete_file_from_s3
@@ -406,3 +406,37 @@ def delete_training_record(record_id):
     db.session.commit()
     flash('Training record deleted successfully', 'success')
     return redirect(url_for('main.employee_training', employee_id=employee_id))
+
+
+@main.route('/send_message', methods=['GET', 'POST'])
+@login_required
+def send_message():
+    form = MessageForm()
+    if form.validate_on_submit():
+        recipient = User.query.filter_by(username=form.recipient.data).first()
+        if recipient is None:
+            flash('User not found.', 'error')
+            return redirect(url_for('main.send_message'))
+        msg = Message(sender=current_user, recipient=recipient,
+                      subject=form.subject.data, body=form.body.data)
+        db.session.add(msg)
+        db.session.commit()
+        flash('Your message has been sent.', 'success')
+        return redirect(url_for('main.index'))
+    return render_template('send_message.html', title='Send Message', form=form)
+
+@main.route('/messages')
+@login_required
+def messages():
+    messages = current_user.received_messages.order_by(Message.timestamp.desc()).all()
+    return render_template('messages.html', messages=messages)
+
+@main.route('/message/<int:message_id>')
+@login_required
+def view_message(message_id):
+    message = Message.query.get_or_404(message_id)
+    if current_user != message.recipient:
+        abort(403)
+    message.read = True
+    db.session.commit()
+    return render_template('view_message.html', message=message)

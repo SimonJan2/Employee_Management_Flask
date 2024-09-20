@@ -21,6 +21,8 @@ class User(UserMixin, db.Model):
     is_approved = db.Column(db.Boolean, default=False)
     # employee is a relationship to the Employee model
     employee = db.relationship('Employee', back_populates='user', uselist=False)
+    sent_messages = db.relationship('Message', foreign_keys='Message.sender_id', backref='sender', lazy='dynamic')
+    received_messages = db.relationship('Message', foreign_keys='Message.recipient_id', backref='recipient', lazy='dynamic')
 
     def set_password(self, password):
         """
@@ -143,3 +145,19 @@ class TrainingRecord(db.Model):
 
     def __repr__(self):
         return f'<TrainingRecord {self.course_name} for Employee {self.employee_id}>'
+
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    subject = db.Column(db.String(100), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    read = db.Column(db.Boolean, default=False)
+
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
+
+    def __repr__(self):
+        return f'<Message {self.subject}>'
