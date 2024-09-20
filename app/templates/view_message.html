@@ -8,7 +8,7 @@
             <strong>Date:</strong> {{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}
         </div>
         <div class="card-body">
-            {{ message.body | nl2br }}
+            {{ message.body | safe }}
         </div>
     </div>
     <a href="{{ url_for('main.messages') }}" class="btn btn-primary mt-3">Back to Messages</a>
