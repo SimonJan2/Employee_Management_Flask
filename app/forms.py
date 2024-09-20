@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, TextAreaField, SelectField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, TextAreaField, SelectField, DateField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
 from flask_wtf.file import FileField, FileAllowed
 from app.models import User
@@ -52,3 +52,13 @@ class TicketResponseForm(FlaskForm):
     status = SelectField('Status', choices=[('Open', 'Open'), ('In Progress', 'In Progress'), ('Closed', 'Closed')], validators=[DataRequired()])
     is_approved = SelectField('Approval', choices=[('None', 'Pending'), ('True', 'Approved'), ('False', 'Disapproved')], validators=[DataRequired()])
     submit = SubmitField('Submit Response')
+
+class TrainingRecordForm(FlaskForm):
+    course_name = StringField('Course Name', validators=[DataRequired()])
+    course_type = SelectField('Course Type', choices=[('Training', 'Training'), ('Certification', 'Certification')], validators=[DataRequired()])
+    start_date = DateField('Start Date', validators=[DataRequired()])
+    end_date = DateField('End Date')
+    status = SelectField('Status', choices=[('In Progress', 'In Progress'), ('Completed', 'Completed'), ('Failed', 'Failed')], validators=[DataRequired()])
+    certification_name = StringField('Certification Name')
+    certification_expiry = DateField('Certification Expiry Date')
+    submit = SubmitField('Submit')

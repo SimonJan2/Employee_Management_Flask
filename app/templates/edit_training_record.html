@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Edit Training Record</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.course_name.label }}
+            {{ form.course_name(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.course_type.label }}
+            {{ form.course_type(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.start_date.label }}
+            {{ form.start_date(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.end_date.label }}
+            {{ form.end_date(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.status.label }}
+            {{ form.status(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.certification_name.label }}
+            {{ form.certification_name(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.certification_expiry.label }}
+            {{ form.certification_expiry(class="form-control") }}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+</div>
+{% endblock %}

@@ -79,6 +79,8 @@ class Employee(db.Model):
     user = db.relationship('User', back_populates='employee')
     # tickets is a relationship to the Ticket model
     tickets = db.relationship('Ticket', back_populates='employee', lazy='dynamic')
+    # training_records is a relationship to the TrainingRecord model
+    training_records = db.relationship('TrainingRecord', backref='employee', lazy='dynamic')
 
     def __repr__(self):
         """
@@ -124,3 +126,21 @@ class Ticket(db.Model):
             str: A string in the format '<Ticket id: title>'.
         """
         return f'<Ticket {self.id}: {self.title}>'
+    
+class TrainingRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=False)
+    course_name = db.Column(db.String(100), nullable=False)
+    course_type = db.Column(db.String(50), nullable=False)  # e.g., 'Training', 'Certification'
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date)
+    status = db.Column(db.String(20), default='In Progress')  # 'In Progress', 'Completed', 'Failed'
+    certification_name = db.Column(db.String(100))
+    certification_expiry = db.Column(db.Date)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    employee = db.relationship('Employee', backref=db.backref('training_records', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<TrainingRecord {self.course_name} for Employee {self.employee_id}>'

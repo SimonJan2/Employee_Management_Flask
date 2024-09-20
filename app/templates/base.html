@@ -23,10 +23,10 @@
                             <a class="nav-link" href="{{ url_for('main.index') }}">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.serve_react_app') }}">Dashboard</a>
+                            <a class="nav-link" href="{{ url_for('main.benefits') }}">Benefits</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.benefits') }}">Benefits</a>
+                            <a class="nav-link" href="{{ url_for('main.employee_training', employee_id=current_user.employee.id) }}">My Training</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('main.employee_list') }}">Employees</a>

@@ -1,11 +1,11 @@
 import os
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import User, Employee
-from app.forms import LoginForm, RegistrationForm, EmployeeForm
+from app.models import User, Employee, TrainingRecord
+from app.forms import LoginForm, RegistrationForm, EmployeeForm, TrainingRecordForm
 from app.models import Ticket
 from app.forms import TicketForm, TicketResponseForm
 from app.s3_utils import upload_file_to_s3, delete_file_from_s3
@@ -356,17 +356,53 @@ def ticket_detail(ticket_id):
     
     return render_template('ticket_detail.html', title='Ticket Detail', ticket=ticket, form=form)
 
-
-@main.route('/dashboard')
+@main.route('/employee/<int:employee_id>/training')
 @login_required
-def serve_react_app():
-    return send_from_directory('../react-dashboard/build', 'index.html')
+def employee_training(employee_id):
+    employee = Employee.query.get_or_404(employee_id)
+    training_records = TrainingRecord.query.filter_by(employee_id=employee_id).all()
+    return render_template('employee_training.html', employee=employee, training_records=training_records)
 
-@main.route('/static/react/<path:path>')
-def serve_react_static(path):
-    return send_from_directory('../react-dashboard/build/static', path)
+@main.route('/employee/<int:employee_id>/add_training', methods=['GET', 'POST'])
+@login_required
+def add_training_record(employee_id):
+    employee = Employee.query.get_or_404(employee_id)
+    form = TrainingRecordForm()
+    if form.validate_on_submit():
+        training_record = TrainingRecord(
+            employee_id=employee_id,
+            course_name=form.course_name.data,
+            course_type=form.course_type.data,
+            start_date=form.start_date.data,
+            end_date=form.end_date.data,
+            status=form.status.data,
+            certification_name=form.certification_name.data,
+            certification_expiry=form.certification_expiry.data
+        )
+        db.session.add(training_record)
+        db.session.commit()
+        flash('Training record added successfully', 'success')
+        return redirect(url_for('main.employee_training', employee_id=employee_id))
+    return render_template('add_training_record.html', form=form, employee=employee)
 
-# Add this new route to serve other files from the React build directory
-@main.route('/dashboard/<path:path>')
-def serve_react_files(path):
-    return send_from_directory('../react-dashboard/build', path)
+@main.route('/training_record/<int:record_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_training_record(record_id):
+    training_record = TrainingRecord.query.get_or_404(record_id)
+    form = TrainingRecordForm(obj=training_record)
+    if form.validate_on_submit():
+        form.populate_obj(training_record)
+        db.session.commit()
+        flash('Training record updated successfully', 'success')
+        return redirect(url_for('main.employee_training', employee_id=training_record.employee_id))
+    return render_template('edit_training_record.html', form=form, training_record=training_record)
+
+@main.route('/training_record/<int:record_id>/delete', methods=['POST'])
+@login_required
+def delete_training_record(record_id):
+    training_record = TrainingRecord.query.get_or_404(record_id)
+    employee_id = training_record.employee_id
+    db.session.delete(training_record)
+    db.session.commit()
+    flash('Training record deleted successfully', 'success')
+    return redirect(url_for('main.employee_training', employee_id=employee_id))
