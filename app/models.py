@@ -47,7 +47,7 @@ class Employee(db.Model):
     user = db.relationship('User', back_populates='employee')
     tickets = db.relationship('Ticket', back_populates='employee', lazy='dynamic')
     training_records = db.relationship('TrainingRecord', back_populates='employee', lazy='dynamic')
-    documents = db.relationship('Document', backref='employee', lazy='dynamic')
+    documents = db.relationship('Document', back_populates='employee', lazy='dynamic')
 
     def __repr__(self):
         return f'<Employee {self.full_name}>'
@@ -116,7 +116,7 @@ class Document(db.Model):
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
     s3_key = db.Column(db.String(255), unique=True, nullable=False)
     employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=False)
-    employee = db.relationship('Employee', backref=db.backref('documents', lazy=True))
+    employee = db.relationship('Employee', back_populates='documents')
 
     def __repr__(self):
         return f'<Document {self.filename}>'
