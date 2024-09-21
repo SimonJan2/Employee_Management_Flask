@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Documents for {{ employee.full_name }}</h1>
+
+<a href="{{ url_for('main.upload_document', employee_id=employee.id) }}" class="btn btn-primary mb-3">Upload New Document</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Filename</th>
+            <th>Type</th>
+            <th>Upload Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for document in documents %}
+        <tr>
+            <td>{{ document.filename }}</td>
+            <td>{{ document.file_type }}</td>
+            <td>{{ document.upload_date.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+                <a href="{{ url_for('main.download_document', document_id=document.id) }}" class="btn btn-sm btn-info">Download</a>
+                <form action="{{ url_for('main.delete_document', document_id=document.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this document?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

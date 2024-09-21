@@ -4,11 +4,11 @@ from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import User, Employee, TrainingRecord, Message
-from app.forms import LoginForm, RegistrationForm, EmployeeForm, TrainingRecordForm, MessageForm
+from app.models import User, Employee, TrainingRecord, Message, Document
+from app.forms import LoginForm, RegistrationForm, EmployeeForm, TrainingRecordForm, MessageForm, DocumentUploadForm
 from app.models import Ticket
 from app.forms import TicketForm, TicketResponseForm
-from app.s3_utils import upload_file_to_s3, delete_file_from_s3
+from app.s3_utils import upload_file_to_s3, delete_file_from_s3, generate_presigned_url
 import uuid
 import io
 
@@ -441,3 +441,58 @@ def view_message(message_id):
     message.read = True
     db.session.commit()
     return render_template('view_message.html', message=message)
+
+@main.route('/employee/<int:employee_id>/documents')
+@login_required
+def employee_documents(employee_id):
+    employee = Employee.query.get_or_404(employee_id)
+    documents = Document.query.filter_by(employee_id=employee_id).all()
+    return render_template('employee_documents.html', employee=employee, documents=documents)
+
+@main.route('/employee/<int:employee_id>/upload_document', methods=['GET', 'POST'])
+@login_required
+def upload_document(employee_id):
+    employee = Employee.query.get_or_404(employee_id)
+    form = DocumentUploadForm()
+    if form.validate_on_submit():
+        file = form.document.data
+        filename = secure_filename(file.filename)
+        file_type = filename.rsplit('.', 1)[1].lower()
+        s3_key = f"documents/{employee_id}/{filename}"
+        
+        s3_url = upload_file_to_s3(file, s3_key)
+        if s3_url:
+            new_document = Document(filename=filename, file_type=file_type, s3_key=s3_key, employee_id=employee_id)
+            db.session.add(new_document)
+            db.session.commit()
+            flash('Document uploaded successfully', 'success')
+            return redirect(url_for('main.employee_documents', employee_id=employee_id))
+        else:
+            flash('Error uploading document', 'error')
+    return render_template('upload_document.html', form=form, employee=employee)
+
+@main.route('/document/<int:document_id>/delete', methods=['POST'])
+@login_required
+def delete_document(document_id):
+    document = Document.query.get_or_404(document_id)
+    employee_id = document.employee_id
+    
+    if delete_file_from_s3(document.s3_key):
+        db.session.delete(document)
+        db.session.commit()
+        flash('Document deleted successfully', 'success')
+    else:
+        flash('Error deleting document from S3', 'error')
+    
+    return redirect(url_for('main.employee_documents', employee_id=employee_id))
+
+@main.route('/document/<int:document_id>/download')
+@login_required
+def download_document(document_id):
+    document = Document.query.get_or_404(document_id)
+    presigned_url = generate_presigned_url(document.s3_key)
+    if presigned_url:
+        return redirect(presigned_url)
+    else:
+        flash('Error generating download link', 'error')
+        return redirect(url_for('main.employee_documents', employee_id=document.employee_id))

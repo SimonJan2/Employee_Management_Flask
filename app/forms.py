@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, TextAreaField, SelectField, DateField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 from app.models import User
 
 class LoginForm(FlaskForm):
@@ -68,3 +68,11 @@ class MessageForm(FlaskForm):
     subject = StringField('Subject', validators=[DataRequired(), Length(max=100)])
     body = TextAreaField('Message', validators=[DataRequired()])
     submit = SubmitField('Send Message')
+
+
+class DocumentUploadForm(FlaskForm):
+    document = FileField('Document', validators=[
+        FileRequired(),
+        FileAllowed(['pdf', 'doc', 'docx', 'jpg', 'png'], 'Only PDF, DOC, DOCX, JPG, and PNG files are allowed!')
+    ])
+    submit = SubmitField('Upload Document')

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Upload Document for {{ employee.full_name }}</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        {{ form.document.label }}
+        {{ form.document(class="form-control-file") }}
+        {% for error in form.document.errors %}
+        <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+{% endblock %}
