@@ -2,6 +2,7 @@ from app import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from sqlalchemy import func
 
 class User(UserMixin, db.Model):
     """
@@ -51,6 +52,10 @@ class Employee(db.Model):
 
     def __repr__(self):
         return f'<Employee {self.full_name}>'
+    
+    @classmethod
+    def get_role_distribution(cls):
+        return db.session.query(cls.role, func.count(cls.id)).group_by(cls.role).all()
 
 class Ticket(db.Model):
     """
@@ -71,6 +76,10 @@ class Ticket(db.Model):
     def __repr__(self):
         return f'<Ticket {self.id}: {self.title}>'
     
+    @classmethod
+    def get_ticket_status_count(cls):
+        return db.session.query(cls.status, func.count(cls.id)).group_by(cls.status).all()
+    
 class TrainingRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=False)
@@ -87,6 +96,10 @@ class TrainingRecord(db.Model):
 
     def __repr__(self):
         return f'<TrainingRecord {self.course_name} for Employee {self.employee_id}>'
+    
+    @classmethod
+    def get_popular_courses(cls):
+        return db.session.query(cls.course_name, func.count(cls.id)).group_by(cls.course_name).order_by(func.count(cls.id).desc()).limit(5).all()
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)

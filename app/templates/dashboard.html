@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1 class="dashboard-title">Dashboard</h1>
+    <button id="refreshDashboard" class="btn btn-refresh-dashboard">Refresh Dashboard</button>
+    <p id="lastUpdateTime"></p>
+    
+    <div class="dashboard-grid">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Employee Role Distribution</h5>
+                <div class="chart-container">
+                    <canvas id="employeeRoleChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Ticket Status</h5>
+                <div class="chart-container">
+                    <canvas id="ticketStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Popular Training Courses</h5>
+                <div class="chart-container">
+                    <canvas id="popularCoursesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshButton = document.getElementById('refreshDashboard');
+    const lastUpdateTime = document.getElementById('lastUpdateTime');
+
+    function updateDashboard() {
+        fetch('/api/dashboard_data')
+            .then(response => response.json())
+            .then(data => {
+                createPieChart('employeeRoleChart', 'Employee Roles', data.employee_roles);
+                createPieChart('ticketStatusChart', 'Ticket Status', data.ticket_status);
+                createBarChart('popularCoursesChart', 'Popular Courses', data.popular_courses);
+                
+                const now = new Date();
+                lastUpdateTime.textContent = `Last updated: ${now.toLocaleString()}`;
+            })
+            .catch(error => console.error('Error fetching dashboard data:', error));
+    }
+
+    function createPieChart(canvasId, label, data) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    data: Object.values(data),
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                title: {
+                    display: true,
+                    text: label
+                }
+            }
+        });
+    }
+
+    function createBarChart(canvasId, label, data) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    label: label,
+                    data: Object.values(data),
+                    backgroundColor: '#36A2EB'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Initial load
+    updateDashboard();
+
+    // Manual refresh
+    refreshButton.addEventListener('click', updateDashboard);
+
+    // Automatic refresh every 5 minutes (300000 milliseconds)
+    setInterval(updateDashboard, 300000);
+});
+</script>
+{% endblock %}

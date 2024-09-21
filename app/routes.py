@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -496,3 +496,21 @@ def download_document(document_id):
     else:
         flash('Error generating download link', 'error')
         return redirect(url_for('main.employee_documents', employee_id=document.employee_id))
+    
+@main.route('/dashboard')
+@login_required
+def dashboard():
+    if not current_user.is_admin:
+        flash('You do not have permission to view the dashboard.', 'error')
+        return redirect(url_for('main.index'))
+    return render_template('dashboard.html')
+
+@main.route('/api/dashboard_data')
+@login_required
+def dashboard_data():
+    data = {
+        'employee_roles': dict(Employee.get_role_distribution()),
+        'ticket_status': dict(Ticket.get_ticket_status_count()),
+        'popular_courses': dict(TrainingRecord.get_popular_courses()),
+    }
+    return jsonify(data)
